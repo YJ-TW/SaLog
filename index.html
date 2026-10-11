@@ -262,6 +262,14 @@ input[type=range]{accent-color:var(--pink);width:100%}
 .vw-info b{font-size:14px}
 .vw-info span{color:var(--gray);font-size:12.5px;margin-left:8px}
 .clip.cur{outline:2px solid var(--pink);outline-offset:-2px}
+/* 每天的影像：小縮圖橫向排列，超過一行就往右滑 */
+.strip{position:relative;display:flex;gap:8px;overflow-x:auto;padding:2px 2px 8px;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
+.strip .clip{flex:0 0 82px;border-radius:12px;scroll-snap-align:start}
+.strip .clip .meta{padding:4px 6px 6px}
+.strip .clip .time{font-size:11px;text-align:center}
+.strip .clip .mood,.strip .badge.off{display:none}
+.strip .badge{left:4px;top:4px;font-size:9.5px;padding:1px 5px}
+.strip .badge svg{width:8px;height:8px}
 /* ---------- VLOG：跨日影像 ---------- */
 .vshift{grid-column:2/-1;font-size:12px;color:var(--gray)}
 .vshift select{font:inherit;color:var(--pink);background:transparent;border:0;border-bottom:1px dashed var(--soft-pink);padding:0 2px;max-width:100%}
@@ -363,7 +371,7 @@ input[type=range]{accent-color:var(--pink);width:100%}
         </div>
         <div class="vw-bar">
           <div class="vw-info"><b id="vw-when"></b><span id="vw-count"></span></div>
-          <div class="row gap"><button class="btn ghost sm" id="vw-dl">下載</button><button class="btn soft sm" id="vw-edit">編輯</button></div>
+          <div class="row gap"><button class="btn blue sm" id="vw-auto">⏸ 暫停</button><button class="btn ghost sm" id="vw-dl">下載</button><button class="btn soft sm" id="vw-edit">編輯</button></div>
         </div>
       </div>
       <div id="j-list"></div>
@@ -506,7 +514,7 @@ function openModal(html, { cls = '' } = {}) {
     if (closed) return; closed = true;
     wrap.dispatchEvent(new Event('close'));
     wrap.classList.remove('show');
-    setTimeout(() => wrap.remove(), 220);
+    setTimeout(() => { wrap.remove(); scheduleAuto(); }, 220);
   };
   $('.modal-backdrop', wrap).onclick = () => { if (!wrap.dataset.lock) wrap.close(); };
   $$('[data-close]', wrap).forEach(b => b.onclick = () => { if (!wrap.dataset.lock) wrap.close(); });
@@ -1385,7 +1393,7 @@ async function uploadFlow() {
 /* =========================================================
    日誌
    ========================================================= */
-const J = { type: 'all', list: [], cur: null, key: '', url: null };
+const J = { type: 'all', list: [], cur: null, key: '', url: null, auto: true, timer: 0 };
 function renderJournal() {
   const q = $('#j-q').value.trim().toLowerCase();
   const date = $('#j-date').value, sort = $('#j-sort').value;
@@ -1418,7 +1426,7 @@ function renderJournal() {
         <div><b class="d">${dotDate(d)}</b><span class="wk">週${weekday(d)}</span><span class="cnt">${rs.length}${rs.length !== total ? ' / ' + total : ''} 支影像</span></div>
         <div class="row gap">${vlogIndex[d] ? `<button class="btn blue sm" data-watch="${d}">▶ 觀看 VLOG</button>` : ''}<button class="btn soft sm" data-vlog="${d}">${vlogIndex[d] ? '重新製作' : '製作 VLOG'}</button></div>
       </div>
-      <div class="grid">${rs.map(clipCard).join('')}</div>
+      <div class="strip">${rs.map(clipCard).join('')}</div>
     </div>`;
   }).join('');
   renderViewer();
@@ -1433,12 +1441,16 @@ function renderViewer() {
   }
   box.hidden = false;
   let i = list.findIndex(r => r.id === J.cur);
-  if (i < 0) { i = list.length - 1; J.cur = list[i].id; }   // 預設從最新的一支開始
+  if (i < 0) { const d = list[list.length - 1].date; i = list.findIndex(x => x.date === d); J.cur = list[i].id; }   // 預設從最近一天的第一支開始
   const r = list[i];
   $('#vw-when').textContent = `${dotDate(r.date)} 週${weekday(r.date)} ${(r.time || '').slice(0, 5)}`;
   $('#vw-count').textContent = `${i + 1} / ${list.length}`;
   $('#vw-prev').disabled = i === 0; $('#vw-next').disabled = i === list.length - 1;
   $$('#j-list .clip').forEach(c => c.classList.toggle('cur', c.dataset.id === r.id));
+  // 讓目前這支的小縮圖留在橫列的可見範圍內
+  const c = $('#j-list .clip.cur');
+  if (c) { const p = c.parentElement, l = c.offsetLeft; if (l < p.scrollLeft || l + c.offsetWidth > p.scrollLeft + p.clientWidth) p.scrollLeft = l - (p.clientWidth - c.offsetWidth) / 2; }
+  $('#vw-auto').textContent = J.auto ? '⏸ 暫停' : '▶ 播放';
   showViewerMedia(r);
 }
 async function showViewerMedia(r) {
@@ -1450,6 +1462,7 @@ async function showViewerMedia(r) {
     if (J.url) URL.revokeObjectURL(J.url);
     J.url = blob ? URL.createObjectURL(blob) : null;
     box.innerHTML = (blob ? mediaTag(r.type, J.url) : '<div class="missing">找不到這筆的影像檔</div>') + '<div class="stamp-ov"></div><div class="mood-ov"></div>';
+    scheduleAuto();
   }
   const ov = $('.stamp-ov', box), mv = $('.mood-ov', box), stp = r.stamp || {};
   if (!ov || !mv) return;
@@ -1461,7 +1474,32 @@ function stepViewer(d) {
   if (i < 0 || !t) return;
   J.cur = t.id; renderViewer();
 }
-function pauseViewer() { const v = $('#vw-media video'); if (v) v.pause(); }
+function pauseViewer() { clearTimeout(J.timer); const v = $('#vw-media video'); if (v) v.pause(); }
+/* 自動播放：照片停留幾秒、影片播完，就換下一支，一路依拍攝時間播到最後 */
+const autoBlocked = () => !J.auto || current !== 'journal' || !!document.querySelector('.modal');
+function scheduleAuto() {
+  clearTimeout(J.timer);
+  if (autoBlocked() || !J.list.length) return;
+  const v = $('#vw-media video');
+  if (v) {
+    v.onended = autoNext;
+    if (v.ended) return autoNext();
+    v.play().catch(() => { v.muted = true; v.play().catch(() => { }); });   // 瀏覽器不准自動出聲時改成靜音播放
+  } else J.timer = setTimeout(autoNext, (+settings.vlog.photoSec || 3) * 1000);
+}
+function autoNext() {
+  if (autoBlocked()) return;
+  const i = J.list.findIndex(r => r.id === J.cur);
+  if (i < 0 || i >= J.list.length - 1) { J.auto = false; $('#vw-auto').textContent = '▶ 播放'; return; }   // 播到最後一支就停
+  stepViewer(1);
+}
+$('#vw-auto').onclick = () => {
+  J.auto = !J.auto;
+  if (!J.auto) { pauseViewer(); return renderViewer(); }
+  const i = J.list.findIndex(r => r.id === J.cur);
+  if (i >= J.list.length - 1 && J.list.length > 1) J.cur = J.list[0].id;   // 已在最後一支：從頭播放
+  renderViewer(); scheduleAuto();
+};
 $('#vw-prev').onclick = () => stepViewer(-1);
 $('#vw-next').onclick = () => stepViewer(1);
 $('#vw-edit').onclick = () => { if (J.cur) { pauseViewer(); openEditor(J.cur); } };
@@ -1978,7 +2016,7 @@ function renderSettings() {
   $('#s-export').onclick = exportBackup;
   $('#s-import').onclick = async () => { const f = await pickFiles(false, 'application/json,.json'); if (f[0]) importBackup(f[0]); };
   $('#s-clear').onclick = clearAll;
-  if (navigator.storage && navigator.storage.estimate) navigator.storage.estimate().then(e => { const x = $('#s-storage'); if (x) x.textContent = fmtSize(e.usage || 0); }).catch(() => { });
+  if (navigator.storage && navigator.storage.estimate) navigator.storage.estimate().then(e => { const x = $('#s-storage'); if (x) x.textContent = fmtSize(e.usage || 0) + (e.quota ? ` ／ 上限約 ${fmtSize(e.quota)}` : ''); }).catch(() => { });
   else $('#s-storage').textContent = '—';
 }
 
@@ -2033,7 +2071,7 @@ function go(page) {
   $$('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + page));
   $$('.tab').forEach(t => t.classList.toggle('active', t.dataset.page === page));
   if (page === 'capture') Cam.start(); else Cam.stop();
-  if (page !== 'journal') pauseViewer();
+  if (page !== 'journal') pauseViewer(); else scheduleAuto();
   refreshViews();
 }
 function refreshViews() {
