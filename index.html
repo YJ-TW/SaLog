@@ -22,7 +22,20 @@
   --sage:#9AAE9B; --light-sage:#E8F0E8;
   --cream:#FAF3EE; --bg:#FAFAF8; --dark:#37352F; --medium:#5A5248; --gray:#9B9A97;
   --line:#EFE7E0; --white:#FFFFFF;
+  --surface:#FFFFFF; --line2:#E8DFD7; --chip:#F1EBE5; --switch:#E3DCD5; --bar:rgba(255,255,255,.94); --veil:rgba(250,243,238,.75);
 }
+/* 深色模式 */
+:root[data-theme=dark]{
+  color-scheme:dark;
+  --soft-pink:#8E6860; --light-pink:#4A3833; --light-blue:#2F3D45; --light-sage:#333D34;
+  --cream:#24211D; --bg:#1C1A17; --dark:#EFE9E2; --medium:#C9C0B6; --gray:#8F8A84;
+  --line:#35312C; --surface:#2A2723; --line2:#3F3A34; --chip:#38332E; --switch:#4A443D; --bar:rgba(28,26,23,.94); --veil:rgba(28,26,23,.75);
+}
+[data-theme=dark] .btn.soft{color:#EBC9C1}
+[data-theme=dark] .btn.blue{color:#BCD3DE}
+[data-theme=dark] .btn.sage{color:#C4D4C5}
+[data-theme=dark] .btn.danger{background:#4A2E2A;color:#F0A89C}
+[data-theme=dark] .shutter{box-shadow:none}
 *{box-sizing:border-box;margin:0;padding:0}
 [hidden]{display:none!important}
 html,body{height:100%}
@@ -38,7 +51,7 @@ main{flex:1;min-height:0;position:relative}
 .page.active{display:block}
 
 /* ---------- tab bar ---------- */
-.tabbar{display:flex;justify-content:space-around;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:6px 8px calc(6px + env(safe-area-inset-bottom))}
+.tabbar{display:flex;justify-content:space-around;background:var(--bar);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:6px 8px calc(6px + env(safe-area-inset-bottom))}
 .tab{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;color:var(--gray);padding:4px 14px;border-radius:12px;min-width:64px}
 .tab svg{width:23px;height:23px}
 .tab.active{color:var(--pink);font-weight:700}
@@ -61,23 +74,23 @@ h3{font-size:15px;font-weight:700}
 .btn.soft{background:var(--light-pink);color:#A86F65}
 .btn.blue{background:var(--light-blue);color:#55788B}
 .btn.sage{background:var(--light-sage);color:#667D67}
-.btn.ghost{background:#fff;border:1px solid #E8DFD7;color:var(--medium)}
+.btn.ghost{background:var(--surface);border:1px solid var(--line2);color:var(--medium)}
 .btn.danger{background:#F6E3DF;color:#B05A4D}
-.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px}
-.input{width:100%;background:#fff;border:1px solid #E8DFD7;border-radius:12px;padding:10px 12px;font-size:15px;outline:none;transition:border-color .2s}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px}
+.input{width:100%;background:var(--surface);border:1px solid var(--line2);border-radius:12px;padding:10px 12px;font-size:15px;outline:none;transition:border-color .2s}
 .input:focus{border-color:var(--soft-pink)}
 .input.sm{width:auto;padding:8px 12px;font-size:13.5px;border-radius:999px}
 select.input{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239B9A97' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
 textarea.input{resize:vertical;min-height:64px;line-height:1.6}
 .f{display:block}
 .f-label{display:block;font-size:12.5px;color:var(--medium);margin-bottom:6px;font-weight:500}
-.seg{display:inline-flex;background:#fff;border-radius:999px;padding:3px;border:1px solid #EDE4DC;gap:2px}
+.seg{display:inline-flex;background:var(--surface);border-radius:999px;padding:3px;border:1px solid var(--line2);gap:2px}
 .seg button{padding:5px 12px;border-radius:999px;font-size:12.5px;color:var(--medium);white-space:nowrap}
 .seg button.on{background:var(--pink);color:#fff;font-weight:700}
 .seg.sm button{padding:4px 10px;font-size:12px}
 .switch{position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0}
 .switch input{opacity:0;width:0;height:0;position:absolute}
-.switch span{position:absolute;inset:0;background:#E3DCD5;border-radius:999px;transition:.2s;cursor:pointer}
+.switch span{position:absolute;inset:0;background:var(--switch);border-radius:999px;transition:.2s;cursor:pointer}
 .switch span::after{content:"";position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.15)}
 .switch input:checked+span{background:var(--sage)}
 .switch input:checked+span::after{transform:translateX(18px)}
@@ -90,13 +103,13 @@ input[type=range]{accent-color:var(--pink);width:100%}
 #page-capture.active{display:flex;flex-direction:column;background:var(--cream);overflow:hidden}
 .cap-top{display:flex;align-items:center;gap:8px;padding:10px 12px 8px;justify-content:space-between}
 .cap-tools{display:flex;gap:6px}
-.icon-btn{width:38px;height:38px;border-radius:50%;background:#fff;border:1px solid #EDE4DC;display:grid;place-items:center;color:var(--medium);flex-shrink:0}
+.icon-btn{width:38px;height:38px;border-radius:50%;background:var(--surface);border:1px solid var(--line2);display:grid;place-items:center;color:var(--medium);flex-shrink:0}
 .icon-btn svg{width:20px;height:20px}
 .icon-btn.on{background:var(--light-pink);color:var(--pink);border-color:var(--soft-pink)}
 .icon-btn.txt{font-size:11.5px;font-weight:700}
 .icon-btn.big{width:48px;height:48px}
 .icon-btn.big svg{width:24px;height:24px}
-.panel{margin:0 12px 8px;background:#fff;border-radius:16px;padding:12px 14px;border:1px solid #EDE4DC;display:none}
+.panel{margin:0 12px 8px;background:var(--surface);border-radius:16px;padding:12px 14px;border:1px solid var(--line2);display:none}
 .panel.open{display:block;animation:drop .18s ease}
 @keyframes drop{from{opacity:0;transform:translateY(-6px)}}
 .panel-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:6px;font-size:14px}
@@ -120,12 +133,12 @@ input[type=range]{accent-color:var(--pink);width:100%}
 .zoom-row svg{width:16px;height:16px;color:var(--gray)}
 .zoom-row span{width:36px;text-align:right}
 .cap-bottom{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:8px 16px 12px;gap:10px}
-.pill-btn{justify-self:start;display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid #EDE4DC;border-radius:999px;padding:8px 13px;font-size:13px;font-weight:700;color:var(--medium)}
+.pill-btn{justify-self:start;display:inline-flex;align-items:center;gap:5px;background:var(--surface);border:1px solid var(--line2);border-radius:999px;padding:8px 13px;font-size:13px;font-weight:700;color:var(--medium)}
 .pill-btn svg{width:16px;height:16px;color:var(--pink)}
 #btn-flip{justify-self:end}
 .shutters{display:flex;gap:20px;align-items:flex-start}
 .sh-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11.5px;color:var(--medium)}
-.shutter{width:64px;height:64px;border-radius:50%;background:#fff;border:3px solid var(--soft-pink);display:grid;place-items:center;box-shadow:0 4px 14px rgba(201,147,138,.25);transition:transform .1s}
+.shutter{width:64px;height:64px;border-radius:50%;background:var(--surface);border:3px solid var(--soft-pink);display:grid;place-items:center;box-shadow:0 4px 14px rgba(201,147,138,.25);transition:transform .1s}
 .shutter:active{transform:scale(.94)}
 .shutter .dot{width:46px;height:46px;border-radius:50%;transition:all .2s}
 .shutter.photo .dot{background:var(--cream);border:2px solid var(--pink)}
@@ -135,7 +148,7 @@ input[type=range]{accent-color:var(--pink);width:100%}
 
 /* ---------- journal ---------- */
 .toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;align-items:center}
-.search{flex:1 1 220px;display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #E8DFD7;border-radius:999px;padding:8px 14px}
+.search{flex:1 1 220px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line2);border-radius:999px;padding:8px 14px}
 .search svg{width:17px;height:17px;color:var(--gray)}
 .search input{border:0;outline:0;flex:1;background:transparent;min-width:0;font-size:14px}
 .day{margin-bottom:26px}
@@ -145,7 +158,7 @@ input[type=range]{accent-color:var(--pink);width:100%}
 .day-head .cnt{color:var(--gray);font-size:12.5px;margin-left:8px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
 @media (max-width:480px){.grid{grid-template-columns:repeat(2,1fr)}}
-.clip{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;text-align:left;display:flex;flex-direction:column;transition:transform .12s,box-shadow .2s}
+.clip{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;text-align:left;display:flex;flex-direction:column;transition:transform .12s,box-shadow .2s}
 .clip:hover{box-shadow:0 6px 18px rgba(55,53,47,.07)}
 .clip:active{transform:scale(.98)}
 .clip .th{aspect-ratio:1;background:var(--cream) center/cover no-repeat;position:relative}
@@ -157,38 +170,12 @@ input[type=range]{accent-color:var(--pink);width:100%}
 .clip .mood{font-size:13px;color:var(--medium);margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.5;min-height:1.5em}
 .clip.off .th{opacity:.55}
 
-/* ---------- dashboard ---------- */
-.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
-@media(min-width:720px){.stats{grid-template-columns:repeat(4,1fr)}}
-.stat{border-radius:18px;padding:14px 16px;background:#fff;border:1px solid var(--line)}
-.stat .lab{font-size:12.5px;color:var(--medium);display:flex;gap:6px;align-items:center}
-.stat .lab i{width:8px;height:8px;border-radius:50%;background:var(--c,var(--pink))}
-.stat .num{font-size:28px;font-weight:700;margin-top:6px;line-height:1.1;letter-spacing:.01em}
-.stat .num small{font-size:13px;font-weight:500;color:var(--medium);margin-left:3px}
-.stat .cap{font-size:11.5px;color:var(--gray);margin-top:3px}
-.stat.pink{background:var(--light-pink);border-color:transparent}
-.stat.blue{background:var(--light-blue);border-color:transparent}
-.stat.sage{background:var(--light-sage);border-color:transparent}
-.stat.cream{background:var(--cream);border-color:transparent}
-.dash-two{display:grid;gap:12px}
-.dash-two>*{min-width:0}
-@media(min-width:720px){.dash-two{grid-template-columns:1.2fr 1fr}}
-.today-strip{display:flex;gap:8px;overflow-x:auto;padding:10px 0 4px}
-.today-strip div{width:64px;height:64px;border-radius:12px;background:var(--cream) center/cover;flex-shrink:0}
-.mood-list{list-style:none;margin-top:8px}
-.mood-list li{padding:10px 0;border-bottom:1px dashed var(--line);font-size:14px;line-height:1.6}
-.mood-list li:last-child{border-bottom:0}
-.mood-list .when{font-size:11.5px;color:var(--gray)}
-.hello{display:flex;align-items:center;gap:12px}
-.logo{width:44px;height:44px;border-radius:14px;background:var(--light-pink);display:grid;place-items:center;color:var(--pink)}
-.logo svg{width:24px;height:24px}
-
 /* ---------- settings ---------- */
 .set-grid{display:grid;gap:12px}
 @media(min-width:760px){.set-grid{grid-template-columns:1fr 1fr}}
 .set-grid .card h3{margin-bottom:10px;display:flex;align-items:center;gap:8px}
 .set-grid .card h3 i{width:8px;height:8px;border-radius:50%;background:var(--c,var(--pink))}
-.set-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #F4EEE8;font-size:14px}
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
 .set-row:last-child{border-bottom:0}
 .set-row .input{max-width:58%}
 .set-row select.input{width:auto;min-width:130px}
@@ -205,9 +192,9 @@ input[type=range]{accent-color:var(--pink);width:100%}
 .modal.center .sheet{max-width:340px;border-radius:20px;margin:16px}
 .modal.wide .sheet{max-width:780px}
 .sheet-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
-.x{width:34px;height:34px;border-radius:50%;background:#F1EBE5;font-size:20px;line-height:1;color:var(--medium);flex-shrink:0}
+.x{width:34px;height:34px;border-radius:50%;background:var(--chip);font-size:20px;line-height:1;color:var(--medium);flex-shrink:0}
 .dialog p{font-size:15px;line-height:1.7;margin:6px 2px 16px;white-space:pre-line}
-.media-box{display:flex;justify-content:center;background:#EFE7DF;border-radius:16px;overflow:hidden;margin-bottom:14px;container-type:inline-size}
+.media-box{display:flex;justify-content:center;background:var(--chip);border-radius:16px;overflow:hidden;margin-bottom:14px;container-type:inline-size}
 .media-in{position:relative;display:inline-block;max-width:100%}
 .media-in img,.media-in video{display:block;max-width:100%;max-height:42vh;max-height:42dvh}
 .media-in .stamp-ov{font-size:clamp(10px,3cqi,16px)}
@@ -218,7 +205,7 @@ input[type=range]{accent-color:var(--pink);width:100%}
 .mood-ov.t{top:12px}.mood-ov.m{top:50%;transform:translateY(-50%)}.mood-ov.b{bottom:12px}
 .form{display:grid;gap:12px}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.stamp-box{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;display:grid;gap:10px}
+.stamp-box{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;display:grid;gap:10px}
 .actions{margin-top:16px;gap:8px}
 .info-line{font-size:12px;color:var(--gray);margin-top:2px}
 .missing{padding:40px;color:var(--gray);font-size:14px}
@@ -231,7 +218,7 @@ input[type=range]{accent-color:var(--pink);width:100%}
 .checks label{display:flex;align-items:center;gap:8px}
 .vlist-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:6px 0 10px}
 .vlist{display:grid;gap:8px}
-.vrow{display:grid;grid-template-columns:20px 54px 1fr auto;gap:10px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:14px;padding:8px 10px 8px 8px}
+.vrow{display:grid;grid-template-columns:20px 54px 1fr auto;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:8px 10px 8px 8px}
 .vrow.off{opacity:.5}
 .vrow .n{font-size:12px;color:var(--gray);text-align:center}
 .vth{width:54px;height:54px;border-radius:10px;background:var(--cream) center/cover;position:relative}
@@ -240,22 +227,42 @@ input[type=range]{accent-color:var(--pink);width:100%}
 .vinfo .t{font-size:12px;color:var(--gray);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .vinfo .m{font-size:13.5px;color:var(--medium);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .vact{display:flex;align-items:center;gap:4px}
-.mini{width:30px;height:30px;border-radius:9px;background:#F5F0EB;color:var(--medium);font-size:14px;display:grid;place-items:center}
+.mini{width:30px;height:30px;border-radius:9px;background:var(--chip);color:var(--medium);font-size:14px;display:grid;place-items:center}
 .vfoot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:16px;position:sticky;bottom:-18px;background:var(--bg);padding:10px 0 4px;flex-wrap:wrap}
 .est{font-size:13px;color:var(--medium)}
 .render{display:grid;gap:12px;justify-items:center;text-align:center}
-.render canvas,.render video{max-width:100%;max-height:52vh;max-height:52dvh;border-radius:14px;background:#EFE7DF;display:block}
+.render canvas,.render video{max-width:100%;max-height:52vh;max-height:52dvh;border-radius:14px;background:var(--chip);display:block}
 .prog{display:flex;align-items:center;gap:10px;width:100%;max-width:420px}
-.bar{flex:1;height:8px;background:#EFE7DF;border-radius:999px;overflow:hidden}
+.bar{flex:1;height:8px;background:var(--chip);border-radius:999px;overflow:hidden}
 .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--soft-pink),var(--pink));border-radius:999px;transition:width .2s}
 .pct{font-size:13px;font-weight:700;color:var(--pink);width:40px}
 
 /* toast & busy */
 #toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translate(-50%,10px);background:rgba(55,53,47,.92);color:#fff;font-size:13.5px;padding:10px 16px;border-radius:999px;opacity:0;transition:.25s;z-index:80;pointer-events:none;max-width:88vw;text-align:center}
 #toast.show{opacity:1;transform:translate(-50%,0)}
-#busy{position:fixed;inset:0;z-index:70;background:rgba(250,243,238,.75);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;font-size:14px;color:var(--medium)}
+#busy{position:fixed;inset:0;z-index:70;background:var(--veil);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;font-size:14px;color:var(--medium)}
 .spin{width:34px;height:34px;border:3px solid var(--light-pink);border-top-color:var(--pink);border-radius:50%;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+/* ---------- 倒數計時 ---------- */
+.pill-btn.sm{padding:0 11px;height:38px;font-size:12px;gap:4px}
+.pill-btn.sm span{color:var(--pink)}
+.count-ov{position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:30cqmin;font-weight:700;text-shadow:0 4px 24px rgba(0,0,0,.5);pointer-events:none}
+/* ---------- 日誌：影像瀏覽 ---------- */
+.viewer{background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden;margin-bottom:22px}
+.vw-stage{position:relative;display:flex;justify-content:center;align-items:center;background:#2B2824;container-type:inline-size;min-height:200px}
+.vw-stage .media-in img,.vw-stage .media-in video{max-height:60vh;max-height:60dvh}
+.vw-stage .missing{color:#C9C0B6}
+.vw-zone{position:absolute;top:0;bottom:64px;width:30%;display:flex;align-items:center;color:#fff;font-size:38px;line-height:1;text-shadow:0 1px 6px rgba(0,0,0,.7)}
+.vw-zone.l{left:0;justify-content:flex-start;padding-left:10px}
+.vw-zone.r{right:0;justify-content:flex-end;padding-right:10px}
+.vw-zone:disabled{opacity:.18}
+.vw-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;flex-wrap:wrap}
+.vw-info b{font-size:14px}
+.vw-info span{color:var(--gray);font-size:12.5px;margin-left:8px}
+.clip.cur{outline:2px solid var(--pink);outline-offset:-2px}
+/* ---------- VLOG：跨日影像 ---------- */
+.vshift{grid-column:2/-1;font-size:12px;color:var(--gray)}
+.vshift select{font:inherit;color:var(--pink);background:transparent;border:0;border-bottom:1px dashed var(--soft-pink);padding:0 2px;max-width:100%}
 </style>
 </head>
 <body>
@@ -268,6 +275,7 @@ input[type=range]{accent-color:var(--pink);width:100%}
         <button data-r="16:9">16:9</button><button data-r="1:1">1:1</button><button data-r="4:3">4:3</button>
       </div>
       <div class="cap-tools">
+        <button class="pill-btn sm" id="btn-timer" title="倒數計時拍攝">倒數<span>無</span></button>
         <button class="icon-btn" id="btn-beauty" title="美顏設定" data-panel="panel-beauty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M18.5 15.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/></svg></button>
         <button class="icon-btn" id="btn-stamp" title="時間戳記" data-panel="panel-stamp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></button>
       </div>
@@ -299,6 +307,7 @@ input[type=range]{accent-color:var(--pink);width:100%}
         <canvas id="cam-canvas" width="720" height="1280"></canvas>
         <div class="stamp-ov br" id="live-stamp" title="點一下換位置"></div>
         <div class="rec-badge" id="rec-badge" hidden></div>
+        <div class="count-ov" id="count-ov" hidden></div>
         <div class="cam-fallback" id="cam-fallback" hidden>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/><path d="M3 3l18 18" stroke-linecap="round"/></svg>
           <b>無法開啟相機</b>
@@ -343,12 +352,20 @@ input[type=range]{accent-color:var(--pink);width:100%}
         <select class="input sm" id="j-sort"><option value="desc">新到舊</option><option value="asc">舊到新</option></select>
         <button class="btn ghost sm" id="j-clear" hidden>清除篩選</button>
       </div>
+      <div class="viewer" id="j-view" hidden>
+        <div class="vw-stage" id="vw-stage">
+          <div class="media-in" id="vw-media"></div>
+          <button class="vw-zone l" id="vw-prev" aria-label="上一支影像">‹</button>
+          <button class="vw-zone r" id="vw-next" aria-label="下一支影像">›</button>
+        </div>
+        <div class="vw-bar">
+          <div class="vw-info"><b id="vw-when"></b><span id="vw-count"></span></div>
+          <div class="row gap"><button class="btn ghost sm" id="vw-dl">下載</button><button class="btn soft sm" id="vw-edit">編輯</button></div>
+        </div>
+      </div>
       <div id="j-list"></div>
     </div>
   </section>
-
-  <!-- ================= 儀表板 ================= -->
-  <section id="page-dashboard" class="page"><div class="container" id="dash"></div></section>
 
   <!-- ================= 設定 ================= -->
   <section id="page-settings" class="page"><div class="container" id="settings-root"></div></section>
@@ -357,7 +374,6 @@ input[type=range]{accent-color:var(--pink);width:100%}
 <nav class="tabbar">
   <button class="tab active" data-page="capture"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>拍攝</button>
   <button class="tab" data-page="journal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M6 3.5h11a2 2 0 0 1 2 2v15H8a2 2 0 0 1-2-2z"/><path d="M6 18.5a2 2 0 0 1 2-2h11M10 8h5M10 11.5h3"/></svg>日誌</button>
-  <button class="tab" data-page="dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="4" y="4" width="7" height="9" rx="2"/><rect x="13" y="4" width="7" height="5" rx="2"/><rect x="13" y="11" width="7" height="9" rx="2"/><rect x="4" y="15" width="7" height="5" rx="2"/></svg>儀表板</button>
   <button class="tab" data-page="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2.2"/><circle cx="9" cy="17" r="2.2"/></svg>設定</button>
 </nav>
 </div>
@@ -395,11 +411,11 @@ const LS = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { toast('瀏覽器儲存空間不足，請先匯出備份或刪除部分紀錄'); return false; } }
 };
 const DEFAULTS = {
-  profile: { name: '', bio: '' },
-  capture: { duration: '3', ratio: '16:9', mirror: true, audio: true, tlInterval: 1 },
+  theme: 'light',
+  capture: { duration: '3', timer: '0', ratio: '16:9', mirror: true, audio: true, tlInterval: 1 },
   beauty: { slim: 0, eyes: 0, tone: 0 },
   stamp: { show: true, pos: 'br', format: 'datetime' },
-  vlog: { ratio: '9:16', photoSec: 3, maxClipSec: 10, showMood: true, intro: true, keepAudio: true, fit: 'blur' }
+  vlog: { ratio: '9:16', photoSec: 3, maxClipSec: 10, showMood: true, keepAudio: true, fit: 'blur' }
 };
 function deepMerge(base, over) {
   const out = Array.isArray(base) ? [...base] : { ...base };
@@ -419,6 +435,20 @@ const saveOrders = () => LS.set(K.ord, orders);
 const saveVlogIndex = () => LS.set(K.vlog, vlogIndex);
 const getRec = id => records.find(r => r.id === id);
 const byTime = (a, b) => (a.date + a.time).localeCompare(b.date + b.time) || a.createdAt - b.createdAt;
+const addDays = (ds, n) => { const [y, m, d] = ds.split('-').map(Number); return fmtDate(new Date(y, m - 1, d + n)); };
+// 這支影像算在哪一天的 VLOG（跨日拍攝的可以改放前一天或下一天）
+const vdate = r => r.vlogDate || r.date;
+
+/* ---------------- 明暗（淺色／深色） ---------------- */
+const darkMQ = matchMedia('(prefers-color-scheme: dark)');
+function applyTheme() {
+  const dark = settings.theme === 'dark' || (settings.theme === 'auto' && darkMQ.matches);
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  const m = document.querySelector('meta[name=theme-color]');
+  if (m) m.content = dark ? '#1C1A17' : '#FAF3EE';
+}
+applyTheme();
+if (darkMQ.addEventListener) darkMQ.addEventListener('change', applyTheme);
 
 const IDB = (() => {
   let dbp;
@@ -826,7 +856,7 @@ const Cam = (() => {
   const video = document.createElement('video');
   video.muted = true; video.playsInline = true; video.setAttribute('playsinline', ''); video.autoplay = true;
   let stream = null, facing = 'environment', running = false, raf = 0, tl = null, recorder = null;
-  const st = { zoom: 1, dur: String(settings.capture.duration), busy: false, recording: false };
+  const st = { zoom: 1, dur: String(settings.capture.duration), timer: String(settings.capture.timer || '0'), busy: false, recording: false };
   const live = { beauty: { ...settings.beauty } };
   const TL_MAX = 150;
 
@@ -937,8 +967,24 @@ const Cam = (() => {
     try { await video.play(); } catch (e) { }
   }
   async function start() { if (running) return; running = true; applyLayout(); loop(); await openStream(); }
-  function stop() { running = false; cancelAnimationFrame(raf); stopTracks(); }
-  const isBusy = () => st.recording || st.busy;
+  function stop() { running = false; cancelAnimationFrame(raf); cancelCount(); stopTracks(); }
+  const isBusy = () => st.recording || st.busy || !!cd;
+
+  // ---- 倒數計時拍攝：倒數中再按一次快門就取消 ----
+  let cd = null;
+  function cancelCount() { if (cd) { clearInterval(cd); cd = null; } $('#count-ov').hidden = true; }
+  function countdown(fn) {
+    if (cd) { cancelCount(); return toast('已取消倒數'); }
+    const secs = +st.timer;
+    if (!secs || isBusy()) return fn();
+    if (!hasFeed()) return noFeed();
+    let left = secs;
+    const el = $('#count-ov'); el.textContent = left; el.hidden = false;
+    cd = setInterval(() => {
+      if (--left > 0) { el.textContent = left; return; }
+      cancelCount(); fn();
+    }, 1000);
+  }
 
   function noFeed() { toast('相機尚未就緒，可以改用日誌的「新增影像」上傳'); }
   function flash() { const f = $('#flash'); f.classList.add('go'); requestAnimationFrame(() => requestAnimationFrame(() => f.classList.remove('go'))); }
@@ -1036,10 +1082,15 @@ const Cam = (() => {
   const durLabel = d => d === 'tl' ? '縮時' : d + '秒';
   function cycleDur() { if (isBusy()) return; st.dur = DUR[(DUR.indexOf(st.dur) + 1) % DUR.length]; syncUI(); toast(st.dur === 'tl' ? '縮時：按錄影開始，再按一次停止' : `錄影 ${st.dur} 秒`); }
   function setDefaultDur(d) { if (!isBusy()) { st.dur = String(d); syncUI(); } }
+  const TIMER = ['0', '2', '5', '10'];
+  const timerLabel = t => +t ? t + '秒' : '無';
+  function cycleTimer() { if (isBusy()) return; st.timer = TIMER[(TIMER.indexOf(st.timer) + 1) % TIMER.length]; syncUI(); toast(+st.timer ? `倒數 ${st.timer} 秒後拍攝` : '不倒數，按下就拍'); }
+  function setDefaultTimer(t) { if (!isBusy()) { st.timer = String(t || '0'); syncUI(); } }
 
   function syncUI() {
     $$('#ratio-seg button').forEach(b => b.classList.toggle('on', b.dataset.r === settings.capture.ratio));
     $('#btn-dur span').textContent = durLabel(st.dur);
+    $('#btn-timer span').textContent = timerLabel(st.timer);
     $$('#panel-beauty [data-b]').forEach(i => { i.value = live.beauty[i.dataset.b]; i.nextElementSibling.textContent = live.beauty[i.dataset.b]; });
     $('#stamp-show').checked = settings.stamp.show;
     $('#stamp-format').value = settings.stamp.format;
@@ -1055,8 +1106,9 @@ const Cam = (() => {
   setInterval(() => { if (running) updateLiveStamp(); }, 1000);
 
   // ---- 事件 ----
-  $('#btn-photo').onclick = takePhoto;
-  $('#btn-video').onclick = recordVideo;
+  $('#btn-photo').onclick = () => countdown(takePhoto);
+  $('#btn-video').onclick = () => (tl || st.recording) ? recordVideo() : countdown(recordVideo);
+  $('#btn-timer').onclick = cycleTimer;
   $('#btn-flip').onclick = flip;
   $('#btn-dur').onclick = cycleDur;
   $('#zoom').oninput = e => setZoom(+e.target.value);
@@ -1084,7 +1136,7 @@ const Cam = (() => {
   frame.addEventListener('touchend', () => { pinch = null; });
   frame.addEventListener('wheel', e => { e.preventDefault(); setZoom(st.zoom - e.deltaY * 0.002); }, { passive: false });
 
-  return { start, stop, isBusy, applyLayout, syncUI, setDefaultDur, live };
+  return { start, stop, isBusy, applyLayout, syncUI, setDefaultDur, setDefaultTimer, live };
 })();
 
 /* 把一張張縮時畫面編成影片 */
@@ -1214,6 +1266,7 @@ async function openEditor(id) {
   const read = bindRecordForm(m, r);
   $('[data-act=save]', m).onclick = () => {
     read(); r.inVlog = $('[name=inVlog]', m).checked; r.updatedAt = Date.now();
+    if (r.date !== r0.date) r.vlogDate = undefined;
     Object.assign(r0, r); saveRecords(); m.close(); toast('已儲存'); refreshViews();
   };
   $('[data-act=del]', m).onclick = async () => {
@@ -1273,7 +1326,7 @@ async function uploadFlow() {
 /* =========================================================
    日誌
    ========================================================= */
-const J = { type: 'all' };
+const J = { type: 'all', list: [], cur: null, key: '', url: null };
 function renderJournal() {
   const q = $('#j-q').value.trim().toLowerCase();
   const date = $('#j-date').value, sort = $('#j-sort').value;
@@ -1287,12 +1340,14 @@ function renderJournal() {
     }
     return true;
   }).sort(byTime);
+  J.list = list.slice();   // 上方的影像瀏覽固定依拍攝時間由舊到新
   if (sort === 'desc') list.reverse();
   const days = [...new Set(records.map(r => r.date))];
   $('#j-sub').textContent = records.length ? `共 ${records.length} 支影像 · ${days.length} 天` : '還沒有任何紀錄';
   const box = $('#j-list');
   if (!list.length) {
     box.innerHTML = `<div class="empty">${hourglass()}<div>${records.length ? '找不到符合條件的紀錄' : '還沒有紀錄<br>到「拍攝」拍下今天的第一個片刻，或按「新增影像」上傳照片與影片'}</div></div>`;
+    renderViewer();
     return;
   }
   const groups = new Map();
@@ -1307,6 +1362,140 @@ function renderJournal() {
       <div class="grid">${rs.map(clipCard).join('')}</div>
     </div>`;
   }).join('');
+  renderViewer();
+}
+/* 影像瀏覽：直接顯示影像，點右邊看下一支、點左邊看上一支 */
+function renderViewer() {
+  const box = $('#j-view'), list = J.list;
+  if (!list.length) {
+    box.hidden = true; J.key = ''; $('#vw-media').innerHTML = '';
+    if (J.url) { URL.revokeObjectURL(J.url); J.url = null; }
+    return;
+  }
+  box.hidden = false;
+  let i = list.findIndex(r => r.id === J.cur);
+  if (i < 0) { i = list.length - 1; J.cur = list[i].id; }   // 預設從最新的一支開始
+  const r = list[i];
+  $('#vw-when').textContent = `${dotDate(r.date)} 週${weekday(r.date)} ${(r.time || '').slice(0, 5)}`;
+  $('#vw-count').textContent = `${i + 1} / ${list.length}`;
+  $('#vw-prev').disabled = i === 0; $('#vw-next').disabled = i === list.length - 1;
+  $$('#j-list .clip').forEach(c => c.classList.toggle('cur', c.dataset.id === r.id));
+  showViewerMedia(r);
+}
+async function showViewerMedia(r) {
+  const box = $('#vw-media');
+  if (J.key !== r.id) {
+    J.key = r.id;
+    let blob = null; try { blob = await IDB.get('media', r.id); } catch (e) { }
+    if (J.key !== r.id) return;   // 等待時已經切到別支
+    if (J.url) URL.revokeObjectURL(J.url);
+    J.url = blob ? URL.createObjectURL(blob) : null;
+    box.innerHTML = (blob ? mediaTag(r.type, J.url) : '<div class="missing">找不到這筆的影像檔</div>') + '<div class="stamp-ov"></div><div class="mood-ov"></div>';
+  }
+  const ov = $('.stamp-ov', box), mv = $('.mood-ov', box), stp = r.stamp || {};
+  if (!ov || !mv) return;
+  ov.className = 'stamp-ov ' + (stp.pos || 'br'); ov.hidden = !stp.show; ov.textContent = stampText(r);
+  mv.className = 'mood-ov ' + (r.moodPos || 'b'); mv.hidden = !r.mood; mv.textContent = r.mood || '';
+}
+function stepViewer(d) {
+  const i = J.list.findIndex(r => r.id === J.cur), t = J.list[i + d];
+  if (i < 0 || !t) return;
+  J.cur = t.id; renderViewer();
+}
+function pauseViewer() { const v = $('#vw-media video'); if (v) v.pause(); }
+$('#vw-prev').onclick = () => stepViewer(-1);
+$('#vw-next').onclick = () => stepViewer(1);
+$('#vw-edit').onclick = () => { if (J.cur) { pauseViewer(); openEditor(J.cur); } };
+$('#vw-dl').onclick = () => { if (J.cur) { pauseViewer(); openDownload(J.cur); } };
+{
+  // 也可以左右滑動
+  let sx = null, sy = 0;
+  const stage = $('#vw-stage');
+  stage.addEventListener('touchstart', e => { if (e.touches.length === 1) { sx = e.touches[0].clientX; sy = e.touches[0].clientY; } else sx = null; }, { passive: true });
+  stage.addEventListener('touchend', e => {
+    if (sx === null) return;
+    const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy; sx = null;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) stepViewer(dx < 0 ? 1 : -1);
+  }, { passive: true });
+  document.addEventListener('keydown', e => {
+    if (current !== 'journal' || document.querySelector('.modal') || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+    if (e.key === 'ArrowRight') stepViewer(1); else if (e.key === 'ArrowLeft') stepViewer(-1);
+  });
+}
+
+/* ---- 下載單支影像：可選擇把日期、心情小語印在畫面上 ---- */
+const mediaExt = mime => { const m = baseMime(mime); return m.startsWith('video/') ? extOf(m) : m === 'image/png' ? 'png' : m === 'image/webp' ? 'webp' : m === 'image/gif' ? 'gif' : 'jpg'; };
+async function openDownload(id) {
+  const r = getRec(id); if (!r) return;
+  let blob = null; try { blob = await IDB.get('media', id); } catch (e) { }
+  if (!blob) return toast('找不到這筆的影像檔');
+  const isVideo = r.type === 'video', canSh = !!(navigator.canShare && navigator.share);
+  const m = openModal(`
+    <div class="sheet-head"><div><h2>下載到手機</h2><p class="sub">${dotDate(r.date)} ${(r.time || '').slice(0, 5)} · ${isVideo ? '影片' : '照片'}</p></div><button class="x" data-close>×</button></div>
+    <div class="dl-opts">
+      <div class="set-row"><span>包含日期<small>${esc(stampText(r))}</small></span><label class="switch"><input type="checkbox" name="d" ${r.stamp && r.stamp.show ? 'checked' : ''}><span></span></label></div>
+      <div class="set-row"><span>包含心情小語<small>${r.mood ? esc(r.mood) : '這支影像還沒有心情小語'}</small></span><label class="switch"><input type="checkbox" name="m" ${r.mood ? 'checked' : 'disabled'}><span></span></label></div>
+      ${isVideo ? '<p class="sub" style="margin-top:8px;line-height:1.6">影片要印上文字時需要重新錄製一次，花的時間大約等於影片長度。</p>' : ''}
+    </div>
+    <div class="render" hidden><canvas></canvas><div class="prog"><div class="bar"><i></i></div><span class="pct">0%</span></div><p class="sub dl-note">處理中，請保持這個畫面開啟。</p></div>
+    <div class="row end actions"><button class="btn ghost" data-close>取消</button>${canSh ? '<button class="btn blue" data-act="share">分享／存到相簿</button>' : ''}<button class="btn primary" data-act="dl">下載</button></div>`);
+  let cancelled = false, working = false, cache = null;
+  m.addEventListener('close', () => { cancelled = true; });
+  const btns = () => $$('[data-act]', m);
+  // 回傳 { blob, slow }；slow 表示重新錄製過，需要再按一次才能下載（瀏覽器規定要由點擊觸發）
+  async function build(incD, incM) {
+    if (!incD && !incM) return { blob };
+    const rr = { ...r, stamp: { pos: 'br', text: '', ...(r.stamp || {}), show: incD } };
+    const url = URL.createObjectURL(blob);
+    try {
+      try { await Promise.race([document.fonts.load('500 40px "Noto Sans TC"'), sleep(2500)]); } catch (e) { }
+      if (!isVideo) {
+        const img = await loadImg(url), c = document.createElement('canvas');
+        c.width = img.naturalWidth; c.height = img.naturalHeight;
+        const x = c.getContext('2d'); x.drawImage(img, 0, 0);
+        if (incD) drawStamp(x, stampText(rr), rr.stamp.pos || 'br', c.width, c.height);
+        if (incM) drawMood(x, r.mood, c.width, c.height, 1, r.moodPos || 'b');
+        return { blob: await new Promise(res => c.toBlob(res, 'image/jpeg', 0.92)) };
+      }
+      if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) throw new Error('這個瀏覽器不支援重新錄製影片');
+      const v = await loadVideo(url);
+      let W = v.videoWidth || r.w || 720, H = v.videoHeight || r.h || 1280;
+      const k = Math.min(1, 1920 / Math.max(W, H)); W = Math.round(W * k / 2) * 2; H = Math.round(H * k / 2) * 2;
+      v.removeAttribute('src'); v.load();
+      $('.dl-opts', m).hidden = true; $('.render', m).hidden = false;
+      const bar = $('.bar i', m), pct = $('.pct', m);
+      const res = await renderVlog({
+        date: r.date, recs: [rr], size: [W, H], canvas: $('canvas', m), isCancelled: () => cancelled,
+        opt: { photoSec: 3, maxClipSec: 1e9, showMood: incM, keepAudio: true, fit: 'cover', plain: true },
+        onProgress: p => { bar.style.width = (p * 100).toFixed(1) + '%'; pct.textContent = Math.floor(p * 100) + '%'; }
+      });
+      return res ? { blob: res.blob, slow: true } : null;
+    } finally { URL.revokeObjectURL(url); }
+  }
+  async function run(share) {
+    if (working) return;
+    const incD = $('[name=d]', m).checked, incM = $('[name=m]', m).checked && !!r.mood, key = incD + '|' + incM;
+    let out = cache && cache.key === key ? cache : null;
+    if (!out) {
+      working = true; btns().forEach(b => b.disabled = true);
+      let res = null;
+      try { res = await build(incD, incM); } catch (e) { console.error(e); toast('處理失敗：' + e.message); }
+      working = false;
+      if (!m.isConnected) return;
+      btns().forEach(b => b.disabled = false);
+      if (!res || !res.blob) { $('.dl-opts', m).hidden = false; $('.render', m).hidden = true; return; }
+      out = cache = { key, blob: res.blob };
+      if (res.slow) { $('.dl-note', m).textContent = '完成！請再按一次「下載」' + (canSh ? '或「分享／存到相簿」' : '') + '。'; return; }
+    }
+    const name = `salog-${r.date.replaceAll('-', '')}-${(r.time || '').replaceAll(':', '')}.${mediaExt(out.blob.type)}`;
+    if (share) {
+      try { await navigator.share({ files: [new File([out.blob], name, { type: baseMime(out.blob.type) })] }); }
+      catch (e) { if (e && e.name === 'AbortError') return; toast('這個瀏覽器無法分享這個檔案，改用下載'); await downloadBlob(out.blob, name); }
+    } else { await downloadBlob(out.blob, name); toast('已開始下載'); }
+    m.close();
+  }
+  $('[data-act=dl]', m).onclick = () => run(false);
+  const sh = $('[data-act=share]', m); if (sh) sh.onclick = () => run(true);
 }
 function clipCard(r) {
   const off = r.inVlog === false;
@@ -1328,7 +1517,7 @@ $('#j-type').onclick = e => { const b = e.target.closest('button'); if (!b) retu
 $('#j-clear').onclick = () => { $('#j-q').value = ''; $('#j-date').value = ''; J.type = 'all'; $$('#j-type button').forEach(x => x.classList.toggle('on', x.dataset.v === 'all')); renderJournal(); };
 $('#j-add').onclick = () => uploadFlow();
 $('#j-list').onclick = e => {
-  const c = e.target.closest('[data-id]'); if (c) return openEditor(c.dataset.id);
+  const c = e.target.closest('[data-id]'); if (c) { J.cur = c.dataset.id; renderViewer(); $('#j-view').scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
   const v = e.target.closest('[data-vlog]'); if (v) return openVlogEditor(v.dataset.vlog);
   const w = e.target.closest('[data-watch]'); if (w) return watchVlog(w.dataset.watch);
 };
@@ -1338,12 +1527,12 @@ $('#j-list').onclick = e => {
    ========================================================= */
 const OUT = { '9:16': [720, 1280], '16:9': [1280, 720], '1:1': [1080, 1080], '4:3': [1024, 768], '3:4': [768, 1024] };
 function getOrder(date) {
-  const ids = records.filter(r => r.date === date).sort(byTime).map(r => r.id);
+  const ids = records.filter(r => vdate(r) === date).sort(byTime).map(r => r.id);
   const saved = (orders[date] || []).filter(id => ids.includes(id));
   const result = saved.slice();
   ids.filter(id => !saved.includes(id)).forEach(id => {
     const r = getRec(id);
-    const i = result.findIndex(x => getRec(x).time > r.time);
+    const i = result.findIndex(x => byTime(getRec(x), r) > 0);
     if (i < 0) result.push(id); else result.splice(i, 0, id);
   });
   return result;
@@ -1353,7 +1542,7 @@ function clipSeconds(r, opt) {
 }
 function openVlogEditor(date) {
   let order = getOrder(date);
-  const opt = { ...settings.vlog, title: '' };
+  const opt = { ...settings.vlog };
   const m = openModal(`
     <div class="sheet-head"><div><h2>製作 VLOG</h2><p class="sub">${dotDate(date)} 週${weekday(date)} · 依拍攝時間自動排列，也可以手動調整</p></div><button class="x" data-close>×</button></div>
     <div class="vbody"></div>`, { cls: 'wide' });
@@ -1369,10 +1558,8 @@ function openVlogEditor(date) {
         <label class="f"><span class="f-label">照片停留</span>${sel('photoSec', [[2, '2 秒'], [3, '3 秒'], [4, '4 秒'], [5, '5 秒']])}</label>
         <label class="f"><span class="f-label">影片片段上限</span>${sel('maxClipSec', [[5, '5 秒'], [10, '10 秒'], [15, '15 秒'], [30, '30 秒'], [60, '60 秒']])}</label>
         <label class="f"><span class="f-label">畫面填滿</span>${sel('fit', [['blur', '完整＋柔焦底'], ['cover', '裁切填滿']])}</label>
-        <label class="f full"><span class="f-label">片頭標題（選填）</span><input class="input" data-o="title" maxlength="30" placeholder="例如：首爾散步的一天" value="${esc(opt.title)}"></label>
         <div class="checks full">
           <label><span class="switch sm"><input type="checkbox" data-o="showMood" ${opt.showMood ? 'checked' : ''}><span></span></span>顯示心情小語</label>
-          <label><span class="switch sm"><input type="checkbox" data-o="intro" ${opt.intro ? 'checked' : ''}><span></span></span>片頭／片尾</label>
           <label><span class="switch sm"><input type="checkbox" data-o="keepAudio" ${opt.keepAudio ? 'checked' : ''}><span></span></span>保留影片原音</label>
         </div>
       </div>
@@ -1384,17 +1571,26 @@ function openVlogEditor(date) {
     $$('[data-o]', body).forEach(el => el.onchange = el.oninput = () => {
       const k = el.dataset.o;
       opt[k] = el.type === 'checkbox' ? el.checked : (['photoSec', 'maxClipSec'].includes(k) ? +el.value : el.value);
-      if (k !== 'title') { settings.vlog[k] = opt[k]; saveSettings(); }
+      settings.vlog[k] = opt[k]; saveSettings();
       updEst();
     });
     renderList();
   }
   function updEst() {
     const ids = order.filter(id => getRec(id) && getRec(id).inVlog !== false);
-    const secs = ids.reduce((s, id) => s + clipSeconds(getRec(id), opt), 0) + (opt.intro ? 4.7 : 0);
+    const secs = ids.reduce((s, id) => s + clipSeconds(getRec(id), opt), 0);
     const est = $('.est', body);
     if (est) est.textContent = `${ids.length} 個片段 · 約 ${fmtDur(secs)}`;
     const go = $('[data-act=go]', body); if (go) go.disabled = !ids.length;
+  }
+  // 跨日拍攝（凌晨或深夜）的影像，可以改放進前一天或下一天的 VLOG
+  function shiftSelect(r) {
+    const h = +(r.time || '12').slice(0, 2), prev = addDays(r.date, -1), next = addDays(r.date, 1), opts = [];
+    if (h < 6 || r.vlogDate === prev) opts.push([prev, '前一天']);
+    opts.push([r.date, '拍攝當天']);
+    if (h >= 22 || r.vlogDate === next) opts.push([next, '下一天']);
+    if (opts.length < 2) return '';
+    return `<label class="vshift">跨日影像，放進 <select data-shift="${r.id}">${opts.map(([v, l]) => `<option value="${v}" ${vdate(r) === v ? 'selected' : ''}>${l} ${dotDate(v).slice(5)}</option>`).join('')}</select> 的 VLOG</label>`;
   }
   function renderList() {
     const list = $('.vlist', body);
@@ -1403,13 +1599,13 @@ function openVlogEditor(date) {
       return `<div class="vrow ${r.inVlog === false ? 'off' : ''}">
         <span class="n">${i + 1}</span>
         <div class="vth" style="background-image:url(${r.thumb || ''})">${r.type === 'video' ? `<i>▶ ${fmtDur(r.duration)}</i>` : ''}</div>
-        <div class="vinfo"><div class="t">${r.time.slice(0, 5)} · ${r.type === 'video' ? '影片' : '照片'} · ${clipSeconds(r, opt).toFixed(1).replace('.0', '')} 秒</div><div class="m">${esc(r.mood) || '<span class="muted">（沒有心情小語）</span>'}</div></div>
+        <div class="vinfo"><div class="t">${r.date !== date ? dotDate(r.date).slice(5) + ' ' : ''}${r.time.slice(0, 5)} · ${r.type === 'video' ? '影片' : '照片'} · ${clipSeconds(r, opt).toFixed(1).replace('.0', '')} 秒</div><div class="m">${esc(r.mood) || '<span class="muted">（沒有心情小語）</span>'}</div></div>
         <div class="vact">
           <label class="switch sm" title="放入 VLOG"><input type="checkbox" data-inc="${id}" ${r.inVlog !== false ? 'checked' : ''}><span></span></label>
           <button class="mini" data-up="${i}" ${i === 0 ? 'disabled' : ''} title="往前">↑</button>
           <button class="mini" data-down="${i}" ${i === order.length - 1 ? 'disabled' : ''} title="往後">↓</button>
           <button class="mini" data-ins="${i + 1}" title="在這段後面插入影像">＋</button>
-        </div></div>`;
+        </div>${shiftSelect(r)}</div>`;
     }).join('') || `<div class="empty">這天還沒有影像，按「在開頭插入影像」加入照片或影片</div>`;
     updEst();
   }
@@ -1442,6 +1638,13 @@ function openVlogEditor(date) {
   body.addEventListener('change', e => {
     const inc = e.target.dataset && e.target.dataset.inc;
     if (inc) { const r = getRec(inc); r.inVlog = e.target.checked; saveRecords(); renderList(); refreshViews(); }
+    const sh = e.target.dataset && e.target.dataset.shift;
+    if (sh) {
+      const r = getRec(sh), v = e.target.value;
+      r.vlogDate = v === r.date ? undefined : v;
+      saveRecords(); order = getOrder(date); renderList(); refreshViews();
+      if (vdate(r) !== date) toast(`已移到 ${dotDate(vdate(r))} 的 VLOG`);
+    }
   });
 
   async function generate() {
@@ -1554,61 +1757,26 @@ function drawMood(ctx, text, W, H, alpha, pos = 'b') {
   lines.forEach((l, i) => ctx.fillText(l, W / 2, bottom - (lines.length - 1 - i) * lh));
   ctx.restore();
 }
-function drawCard(ctx, W, H, t, dur, lines) {
-  const s = Math.min(W, H);
-  ctx.fillStyle = '#FAF3EE'; ctx.fillRect(0, 0, W, H);
-  ctx.save(); ctx.globalAlpha = 0.55;
-  ctx.fillStyle = '#F5E6E3'; ctx.beginPath(); ctx.arc(W * 0.86, H * 0.16, s * 0.32, 0, 7); ctx.fill();
-  ctx.fillStyle = '#E3EDF3'; ctx.beginPath(); ctx.arc(W * 0.1, H * 0.88, s * 0.28, 0, 7); ctx.fill();
-  ctx.fillStyle = '#E8F0E8'; ctx.beginPath(); ctx.arc(W * 0.92, H * 0.92, s * 0.12, 0, 7); ctx.fill();
-  ctx.restore();
-  const a = Math.min(1, t / 0.6) * Math.min(1, Math.max(0, (dur - t) / 0.4));
-  ctx.save(); ctx.globalAlpha = a; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  const lift = (1 - Math.min(1, t / 0.6)) * s * 0.02;
-  lines.forEach(l => {
-    ctx.font = `${l.w || 500} ${Math.round(s * l.size)}px "Noto Sans TC", sans-serif`;
-    ctx.fillStyle = l.color || '#37352F';
-    if ('letterSpacing' in ctx) ctx.letterSpacing = (l.ls || 0) + 'px';
-    ctx.fillText(l.text, W / 2, H / 2 + s * l.y + lift);
-  });
-  ctx.restore();
-}
 function drawSeg(ctx, sg, t, W, H, opt, date, count) {
-  if (sg.kind === 'intro') {
-    return drawCard(ctx, W, H, t, sg.dur, [
-      { text: 'SALOG  ·  DAILY VLOG', size: 0.03, y: -0.17, color: '#C9938A', w: 700, ls: 4 },
-      { text: dotDate(date), size: 0.1, y: -0.05, w: 700 },
-      { text: `週${weekday(date)}`, size: 0.038, y: 0.05, color: '#5A5248' },
-      ...(opt.title ? [{ text: opt.title, size: 0.046, y: 0.15, color: '#7A9BAD', w: 500 }] : [])
-    ]);
-  }
-  if (sg.kind === 'outro') {
-    return drawCard(ctx, W, H, t, sg.dur, [
-      { text: '今天也好好地記錄下來了', size: 0.05, y: -0.04, w: 700 },
-      { text: `${count} 個片刻  ·  ${dotDate(date)}`, size: 0.032, y: 0.05, color: '#9B9A97' },
-      { text: '沙漏 Salog', size: 0.03, y: 0.14, color: '#C9938A', w: 700, ls: 2 }
-    ]);
-  }
   const r = sg.r;
   ctx.fillStyle = '#FAF3EE'; ctx.fillRect(0, 0, W, H);
-  if (sg.kind === 'photo') drawFit(ctx, sg.img, sg.img.naturalWidth, sg.img.naturalHeight, W, H, opt.fit, 1 + 0.06 * Math.min(1, t / sg.dur));
+  if (sg.kind === 'photo') drawFit(ctx, sg.img, sg.img.naturalWidth, sg.img.naturalHeight, W, H, opt.fit, opt.plain ? 1 : 1 + 0.06 * Math.min(1, t / sg.dur));
   else if (sg.v.videoWidth) drawFit(ctx, sg.v, sg.v.videoWidth, sg.v.videoHeight, W, H, opt.fit, 1);
   if (r.stamp && r.stamp.show) drawStamp(ctx, stampText(r), r.stamp.pos || 'br', W, H);
-  if (opt.showMood && r.mood) drawMood(ctx, r.mood, W, H, Math.min(1, Math.max(0, (t - 0.3) / 0.5)) * Math.min(1, Math.max(0, (sg.dur - t) / 0.3)), r.moodPos || 'b');
+  if (opt.showMood && r.mood) drawMood(ctx, r.mood, W, H, opt.plain ? 1 : Math.min(1, Math.max(0, (t - 0.3) / 0.5)) * Math.min(1, Math.max(0, (sg.dur - t) / 0.3)), r.moodPos || 'b');
   const fin = 1 - Math.min(1, t / 0.35), fout = 1 - Math.min(1, (sg.dur - t) / 0.3);
   const f = Math.max(fin, fout);
-  if (f > 0) { ctx.fillStyle = `rgba(250,243,238,${f})`; ctx.fillRect(0, 0, W, H); }
+  if (f > 0 && !opt.plain) { ctx.fillStyle = `rgba(250,243,238,${f})`; ctx.fillRect(0, 0, W, H); }
 }
 
-async function renderVlog({ date, ids, opt, canvas, onProgress, isCancelled }) {
+async function renderVlog({ date, ids, recs, size, opt, canvas, onProgress, isCancelled }) {
   try { await Promise.race([document.fonts.load('700 40px "Noto Sans TC"'), sleep(2500)]); } catch (e) { }
-  const [W, H] = OUT[opt.ratio] || OUT['9:16'];
+  const [W, H] = size || OUT[opt.ratio] || OUT['9:16'];
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
   const urls = [], segs = [];
-  if (opt.intro) segs.push({ kind: 'intro', dur: 2.5 });
-  for (const id of ids) {
-    const r = getRec(id);
+  for (const r of recs || ids.map(getRec)) {
+    const id = r.id;
     const blob = await IDB.get('media', id).catch(() => null);
     if (!blob) continue;
     const url = URL.createObjectURL(blob); urls.push(url);
@@ -1623,7 +1791,6 @@ async function renderVlog({ date, ids, opt, canvas, onProgress, isCancelled }) {
     if (isCancelled()) break;
   }
   const count = segs.filter(s => s.r).length;
-  if (opt.intro) segs.push({ kind: 'outro', dur: 2.2 });
   const cleanup = () => urls.forEach(u => URL.revokeObjectURL(u));
   if (isCancelled() || !count) { cleanup(); if (!count && !isCancelled()) throw new Error('片段都無法讀取'); return null; }
   const total = segs.reduce((s, x) => s + x.dur, 0);
@@ -1681,66 +1848,6 @@ async function renderVlog({ date, ids, opt, canvas, onProgress, isCancelled }) {
 }
 
 /* =========================================================
-   儀表板
-   ========================================================= */
-async function renderDashboard() {
-  const el = $('#dash');
-  const photos = records.filter(r => r.type === 'photo').length;
-  const videos = records.length - photos;
-  const dates = new Set(records.map(r => r.date));
-  const now = new Date(), mk = fmtDate(now).slice(0, 7);
-  const month = records.filter(r => r.date.startsWith(mk)).length;
-  let streak = 0; const d = new Date(now);
-  if (!dates.has(fmtDate(d))) d.setDate(d.getDate() - 1);
-  while (dates.has(fmtDate(d))) { streak++; d.setDate(d.getDate() - 1); }
-  const moods = records.filter(r => r.mood).sort(byTime).reverse();
-  const vlogs = Object.keys(vlogIndex).length;
-  const vlogSecs = Object.values(vlogIndex).reduce((s, v) => s + (v.duration || 0), 0);
-  const td = today(), todays = records.filter(r => r.date === td).sort(byTime);
-  const name = settings.profile.name;
-  const hour = now.getHours();
-  const hi = hour < 11 ? '早安' : hour < 18 ? '午安' : '晚安';
-  const stat = (cls, c, lab, num, unit, cap) => `<div class="stat ${cls}" style="--c:${c}"><div class="lab"><i></i>${lab}</div><div class="num">${num}<small>${unit}</small></div><div class="cap">${cap}</div></div>`;
-  el.innerHTML = `
-    <div class="page-head">
-      <div class="hello"><div class="logo">${hourglass()}</div><div><h1>${hi}${name ? '，' + esc(name) : ''}</h1><p class="sub">${esc(settings.profile.bio) || `${dotDate(td)} 週${weekday(td)} · 今天也來記錄一點點吧`}</p></div></div>
-    </div>
-    <div class="stats">
-      ${stat('pink', 'var(--pink)', '全部影像', records.length, '支', `照片 ${photos} · 影片 ${videos}`)}
-      ${stat('blue', 'var(--blue)', '記錄天數', dates.size, '天', `本月新增 ${month} 支`)}
-      ${stat('sage', 'var(--sage)', '連續記錄', streak, '天', streak ? '繼續保持！' : '今天拍一張開始吧')}
-      ${stat('cream', 'var(--soft-pink)', '已生成 VLOG', vlogs, '支', vlogs ? `合計 ${fmtDur(vlogSecs)}` : '到日誌一鍵生成')}
-      ${stat('', 'var(--pink)', '照片', photos, '張', '')}
-      ${stat('', 'var(--blue)', '影片', videos, '段', `合計 ${fmtDur(records.filter(r => r.type === 'video').reduce((s, r) => s + (r.duration || 0), 0))}`)}
-      ${stat('', 'var(--sage)', '心情小語', moods.length, '則', records.length ? `${Math.round(moods.length / records.length * 100)}% 的影像有留言` : '')}
-      ${stat('', 'var(--gray)', '儲存空間', '<span id="dash-storage">…</span>', '', '存在這台裝置的瀏覽器')}
-    </div>
-    <div class="dash-two">
-      <div class="card">
-        <div class="row between wrap gap"><h3>今天 ${dotDate(td)}</h3><span class="muted" style="font-size:13px">${todays.length} 支影像</span></div>
-        ${todays.length ? `<div class="today-strip">${todays.map(r => `<div style="background-image:url(${r.thumb || ''})"></div>`).join('')}</div>` : '<p class="sub" style="margin:10px 0">今天還沒有紀錄</p>'}
-        <div class="row gap wrap" style="margin-top:10px">
-          <button class="btn ghost sm" data-go="capture">去拍攝</button>
-          ${todays.length ? `<button class="btn primary sm" data-today-vlog>${vlogIndex[td] ? '重新製作今日 VLOG' : '製作今日 VLOG'}</button>` : ''}
-          ${vlogIndex[td] ? `<button class="btn blue sm" data-today-watch>▶ 觀看</button>` : ''}
-        </div>
-      </div>
-      <div class="card">
-        <h3>最近的心情</h3>
-        ${moods.length ? `<ul class="mood-list">${moods.slice(0, 5).map(r => `<li>${esc(r.mood)}<div class="when">${dotDate(r.date)} ${r.time.slice(0, 5)}</div></li>`).join('')}</ul>` : '<p class="sub" style="margin-top:8px">拍攝後留下一句話，會出現在這裡</p>'}
-      </div>
-    </div>`;
-  $$('[data-go]', el).forEach(b => b.onclick = () => go(b.dataset.go));
-  const tv = $('[data-today-vlog]', el); if (tv) tv.onclick = () => openVlogEditor(td);
-  const tw = $('[data-today-watch]', el); if (tw) tw.onclick = () => watchVlog(td);
-  try {
-    const est = navigator.storage && navigator.storage.estimate ? await navigator.storage.estimate() : null;
-    const box = $('#dash-storage');
-    if (box) box.textContent = est ? fmtSize(est.usage || 0) : '—';
-  } catch (e) { }
-}
-
-/* =========================================================
    設定
    ========================================================= */
 function renderSettings() {
@@ -1751,12 +1858,12 @@ function renderSettings() {
   root.innerHTML = `
     <div class="page-head"><div><h1>個人化設定</h1><p class="sub">設定與紀錄都只存在這台裝置的瀏覽器裡</p></div></div>
     <div class="set-grid">
-      <div class="card" style="--c:var(--pink)"><h3><i></i>個人資料</h3>
-        <div class="set-row"><span>暱稱</span><input class="input" data-set="profile.name" maxlength="20" placeholder="你的名字"></div>
-        <div class="set-row"><span>一句話介紹</span><input class="input" data-set="profile.bio" maxlength="40" placeholder="顯示在儀表板"></div>
+      <div class="card" style="--c:var(--pink)"><h3><i></i>外觀</h3>
+        <div class="set-row"><span>明暗<small>APP 整體的淺色或深色</small></span>${s('theme', [['light', '淺色'], ['dark', '深色'], ['auto', '跟隨手機設定']])}</div>
       </div>
       <div class="card" style="--c:var(--blue)"><h3><i></i>拍攝</h3>
         <div class="set-row"><span>預設錄影秒數</span>${s('capture.duration', [['3', '3 秒'], ['5', '5 秒'], ['tl', '縮時']])}</div>
+        <div class="set-row"><span>預設倒數計時<small>按下快門後倒數幾秒才拍</small></span>${s('capture.timer', [['0', '無'], ['2', '2 秒'], ['5', '5 秒'], ['10', '10 秒']])}</div>
         <div class="set-row"><span>預設畫面比例</span>${s('capture.ratio', [['16:9', '16:9'], ['1:1', '1:1'], ['4:3', '4:3']])}</div>
         <div class="set-row"><span>縮時拍攝間隔<small>每隔多久拍一張</small></span>${s('capture.tlInterval', [['0.5', '0.5 秒'], ['1', '1 秒'], ['2', '2 秒'], ['3', '3 秒']])}</div>
         <div class="set-row"><span>前鏡頭鏡像</span>${sw('capture.mirror')}</div>
@@ -1778,7 +1885,6 @@ function renderSettings() {
         <div class="set-row"><span>影片片段上限</span>${s('vlog.maxClipSec', [['5', '5 秒'], ['10', '10 秒'], ['15', '15 秒'], ['30', '30 秒'], ['60', '60 秒']])}</div>
         <div class="set-row"><span>畫面填滿方式</span>${s('vlog.fit', [['blur', '完整＋柔焦底'], ['cover', '裁切填滿']])}</div>
         <div class="set-row"><span>顯示心情小語</span>${sw('vlog.showMood')}</div>
-        <div class="set-row"><span>片頭／片尾</span>${sw('vlog.intro')}</div>
         <div class="set-row"><span>保留影片原音</span>${sw('vlog.keepAudio')}</div>
       </div>
       <div class="card" style="--c:var(--medium)"><h3><i></i>資料與備份</h3>
@@ -1804,6 +1910,8 @@ function renderSettings() {
       saveSettings(); toast('已儲存');
       if (p.startsWith('capture.ratio') || p.startsWith('capture.orient') || p.startsWith('stamp.')) Cam.applyLayout();
       if (p === 'capture.duration') Cam.setDefaultDur(nv);
+      if (p === 'capture.timer') Cam.setDefaultTimer(nv);
+      if (p === 'theme') applyTheme();
     });
   });
   $$('[data-go]', root).forEach(b => b.onclick = () => go(b.dataset.go));
@@ -1841,7 +1949,7 @@ async function importBackup(file) {
     data.records.forEach(r => map.set(r.id, r));
     records = [...map.values()]; saveRecords();
     orders = { ...orders, ...(data.orders || {}) }; saveOrders();
-    if (data.settings) { settings = deepMerge(DEFAULTS, data.settings); saveSettings(); Object.assign(Cam.live.beauty, settings.beauty); Cam.setDefaultDur(settings.capture.duration); Cam.applyLayout(); }
+    if (data.settings) { settings = deepMerge(DEFAULTS, data.settings); saveSettings(); Object.assign(Cam.live.beauty, settings.beauty); Cam.setDefaultDur(settings.capture.duration); Cam.setDefaultTimer(settings.capture.timer); applyTheme(); Cam.applyLayout(); }
     toast(`匯入完成，共 ${records.length} 筆紀錄`);
   } catch (e) { console.error(e); toast('匯入失敗：' + e.message); }
   hideBusy(); refreshViews();
@@ -1852,7 +1960,7 @@ async function clearAll() {
   Object.values(K).forEach(k => localStorage.removeItem(k));
   try { await IDB.clear('media'); await IDB.clear('vlogs'); } catch (e) { }
   settings = deepMerge(DEFAULTS, {}); records = []; orders = {}; vlogIndex = {};
-  Object.assign(Cam.live.beauty, settings.beauty); Cam.setDefaultDur(settings.capture.duration); Cam.applyLayout();
+  Object.assign(Cam.live.beauty, settings.beauty); Cam.setDefaultDur(settings.capture.duration); Cam.setDefaultTimer(settings.capture.timer); applyTheme(); Cam.applyLayout();
   toast('已清除所有資料'); refreshViews();
 }
 
@@ -1866,11 +1974,11 @@ function go(page) {
   $$('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + page));
   $$('.tab').forEach(t => t.classList.toggle('active', t.dataset.page === page));
   if (page === 'capture') Cam.start(); else Cam.stop();
+  if (page !== 'journal') pauseViewer();
   refreshViews();
 }
 function refreshViews() {
   if (current === 'journal') renderJournal();
-  if (current === 'dashboard') renderDashboard();
   if (current === 'settings') renderSettings();
 }
 $$('.tab').forEach(t => t.onclick = () => go(t.dataset.page));
