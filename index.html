@@ -1,0 +1,1739 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FAF3EE">
+<title>沙漏 Salog</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --pink:#C9938A; --soft-pink:#E8C4BC; --light-pink:#F5E6E3;
+  --blue:#7A9BAD; --soft-blue:#B8CFDA; --light-blue:#E3EDF3;
+  --sage:#9AAE9B; --light-sage:#E8F0E8;
+  --cream:#FAF3EE; --bg:#FAFAF8; --dark:#37352F; --medium:#5A5248; --gray:#9B9A97;
+  --line:#EFE7E0; --white:#FFFFFF;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{font-family:'Noto Sans TC',system-ui,-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;background:var(--bg);color:var(--dark);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+button:disabled{opacity:.35;cursor:default}
+input,textarea,select{font:inherit;color:inherit}
+b,strong{font-weight:700}
+svg{flex-shrink:0}
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh}
+main{flex:1;min-height:0;position:relative}
+.page{display:none;height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.page.active{display:block}
+
+/* ---------- tab bar ---------- */
+.tabbar{display:flex;justify-content:space-around;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:6px 8px calc(6px + env(safe-area-inset-bottom))}
+.tab{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;color:var(--gray);padding:4px 14px;border-radius:12px;min-width:64px}
+.tab svg{width:23px;height:23px}
+.tab.active{color:var(--pink);font-weight:700}
+
+/* ---------- shared ---------- */
+.container{max-width:980px;margin:0 auto;padding:20px 16px 40px}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+h1{font-size:22px;font-weight:700;letter-spacing:.02em}
+h2{font-size:18px;font-weight:700}
+h3{font-size:15px;font-weight:700}
+.sub{color:var(--gray);font-size:13px;margin-top:2px}
+.muted{color:var(--gray)}
+.row{display:flex;align-items:center}
+.row.gap{gap:8px}.row.wrap{flex-wrap:wrap}.row.end{justify-content:flex-end}.row.center{justify-content:center}.row.between{justify-content:space-between}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 18px;border-radius:999px;font-size:14px;font-weight:500;white-space:nowrap;transition:transform .1s,opacity .2s}
+.btn:active{transform:scale(.97)}
+.btn.sm{padding:7px 13px;font-size:13px}
+.btn svg{width:17px;height:17px}
+.btn.primary{background:var(--pink);color:#fff}
+.btn.soft{background:var(--light-pink);color:#A86F65}
+.btn.blue{background:var(--light-blue);color:#55788B}
+.btn.sage{background:var(--light-sage);color:#667D67}
+.btn.ghost{background:#fff;border:1px solid #E8DFD7;color:var(--medium)}
+.btn.danger{background:#F6E3DF;color:#B05A4D}
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px}
+.input{width:100%;background:#fff;border:1px solid #E8DFD7;border-radius:12px;padding:10px 12px;font-size:15px;outline:none;transition:border-color .2s}
+.input:focus{border-color:var(--soft-pink)}
+.input.sm{width:auto;padding:8px 12px;font-size:13.5px;border-radius:999px}
+select.input{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239B9A97' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+textarea.input{resize:vertical;min-height:64px;line-height:1.6}
+.f{display:block}
+.f-label{display:block;font-size:12.5px;color:var(--medium);margin-bottom:6px;font-weight:500}
+.seg{display:inline-flex;background:#fff;border-radius:999px;padding:3px;border:1px solid #EDE4DC;gap:2px}
+.seg button{padding:5px 12px;border-radius:999px;font-size:12.5px;color:var(--medium);white-space:nowrap}
+.seg button.on{background:var(--pink);color:#fff;font-weight:700}
+.seg.sm button{padding:4px 10px;font-size:12px}
+.switch{position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0}
+.switch input{opacity:0;width:0;height:0;position:absolute}
+.switch span{position:absolute;inset:0;background:#E3DCD5;border-radius:999px;transition:.2s;cursor:pointer}
+.switch span::after{content:"";position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.switch input:checked+span{background:var(--sage)}
+.switch input:checked+span::after{transform:translateX(18px)}
+.switch.sm{width:36px;height:21px}.switch.sm span::after{width:15px;height:15px}.switch.sm input:checked+span::after{transform:translateX(15px)}
+input[type=range]{accent-color:var(--pink);width:100%}
+.empty{text-align:center;padding:48px 16px;color:var(--gray);font-size:14px;line-height:1.8}
+.empty svg{width:56px;height:56px;color:var(--soft-pink);margin-bottom:8px}
+
+/* ---------- capture ---------- */
+#page-capture.active{display:flex;flex-direction:column;background:var(--cream);overflow:hidden}
+.cap-top{display:flex;align-items:center;gap:8px;padding:10px 12px 8px;justify-content:space-between}
+.cap-tools{display:flex;gap:6px}
+.icon-btn{width:38px;height:38px;border-radius:50%;background:#fff;border:1px solid #EDE4DC;display:grid;place-items:center;color:var(--medium);flex-shrink:0}
+.icon-btn svg{width:20px;height:20px}
+.icon-btn.on{background:var(--light-pink);color:var(--pink);border-color:var(--soft-pink)}
+.icon-btn.txt{font-size:11.5px;font-weight:700}
+.icon-btn.big{width:48px;height:48px}
+.icon-btn.big svg{width:24px;height:24px}
+.panel{margin:0 12px 8px;background:#fff;border-radius:16px;padding:12px 14px;border:1px solid #EDE4DC;display:none}
+.panel.open{display:block;animation:drop .18s ease}
+@keyframes drop{from{opacity:0;transform:translateY(-6px)}}
+.panel-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:6px;font-size:14px}
+.hint{font-size:11.5px;color:var(--gray)}
+.slider-row{display:grid;grid-template-columns:52px 1fr 34px;align-items:center;gap:10px;font-size:13px;padding:3px 0;color:var(--medium)}
+.slider-row output{text-align:right;font-size:12px;color:var(--gray)}
+.stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:2px 12px;position:relative}
+.frame{position:relative;border-radius:20px;overflow:hidden;background:#3A3631;box-shadow:0 10px 30px rgba(55,53,47,.12);container-type:size;touch-action:none}
+.frame canvas{width:100%;height:100%;display:block}
+.stamp-ov{position:absolute;color:#FFF8F0;font-size:clamp(10px,3.4cqmin,18px);font-weight:500;text-shadow:0 1px 4px rgba(0,0,0,.45);letter-spacing:.04em;white-space:nowrap;line-height:1.2}
+.stamp-ov.tl{top:4.5cqmin;left:4.5cqmin}.stamp-ov.tr{top:4.5cqmin;right:4.5cqmin}
+.stamp-ov.bl{bottom:4.5cqmin;left:4.5cqmin}.stamp-ov.br{bottom:4.5cqmin;right:4.5cqmin}
+#live-stamp{cursor:pointer}
+.rec-badge{position:absolute;top:12px;left:50%;transform:translateX(-50%);background:rgba(201,147,138,.95);color:#fff;font-size:12.5px;font-weight:700;padding:5px 12px;border-radius:999px;letter-spacing:.03em}
+.cam-fallback{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:20px;background:linear-gradient(160deg,#4A453F,#36322D);color:#F5EDE6;font-size:13.5px;line-height:1.6}
+.cam-fallback svg{width:40px;height:40px;opacity:.7}
+.cam-fallback .btn{margin-top:4px}
+.flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .25s}
+.flash.go{opacity:.85;transition:none}
+.zoom-row{display:flex;align-items:center;gap:10px;padding:8px 28px 0;font-size:12px;color:var(--medium)}
+.zoom-row svg{width:16px;height:16px;color:var(--gray)}
+.zoom-row span{width:36px;text-align:right}
+.cap-bottom{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:8px 16px 12px;gap:10px}
+.pill-btn{justify-self:start;display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid #EDE4DC;border-radius:999px;padding:8px 13px;font-size:13px;font-weight:700;color:var(--medium)}
+.pill-btn svg{width:16px;height:16px;color:var(--pink)}
+#btn-flip{justify-self:end}
+.shutters{display:flex;gap:20px;align-items:flex-start}
+.sh-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11.5px;color:var(--medium)}
+.shutter{width:64px;height:64px;border-radius:50%;background:#fff;border:3px solid var(--soft-pink);display:grid;place-items:center;box-shadow:0 4px 14px rgba(201,147,138,.25);transition:transform .1s}
+.shutter:active{transform:scale(.94)}
+.shutter .dot{width:46px;height:46px;border-radius:50%;transition:all .2s}
+.shutter.photo .dot{background:var(--cream);border:2px solid var(--pink)}
+.shutter.video .dot{background:var(--pink)}
+.shutter.video.rec .dot{width:24px;height:24px;border-radius:6px}
+.busy-cap .shutter{opacity:.5}
+
+/* ---------- journal ---------- */
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;align-items:center}
+.search{flex:1 1 220px;display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #E8DFD7;border-radius:999px;padding:8px 14px}
+.search svg{width:17px;height:17px;color:var(--gray)}
+.search input{border:0;outline:0;flex:1;background:transparent;min-width:0;font-size:14px}
+.day{margin-bottom:26px}
+.day-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.day-head .d{font-size:16px}
+.day-head .wk{color:var(--medium);font-size:13px;margin-left:4px}
+.day-head .cnt{color:var(--gray);font-size:12.5px;margin-left:8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+@media (max-width:480px){.grid{grid-template-columns:repeat(2,1fr)}}
+.clip{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;text-align:left;display:flex;flex-direction:column;transition:transform .12s,box-shadow .2s}
+.clip:hover{box-shadow:0 6px 18px rgba(55,53,47,.07)}
+.clip:active{transform:scale(.98)}
+.clip .th{aspect-ratio:1;background:var(--cream) center/cover no-repeat;position:relative}
+.badge{position:absolute;left:8px;top:8px;background:rgba(55,53,47,.55);color:#fff;font-size:11px;padding:2px 8px;border-radius:999px;display:flex;align-items:center;gap:3px}
+.badge svg{width:10px;height:10px}
+.badge.off{left:auto;right:8px;background:rgba(255,255,255,.9);color:var(--gray)}
+.clip .meta{padding:8px 10px 11px}
+.clip .time{font-size:12px;color:var(--gray)}
+.clip .mood{font-size:13px;color:var(--medium);margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.5;min-height:1.5em}
+.clip.off .th{opacity:.55}
+
+/* ---------- dashboard ---------- */
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+@media(min-width:720px){.stats{grid-template-columns:repeat(4,1fr)}}
+.stat{border-radius:18px;padding:14px 16px;background:#fff;border:1px solid var(--line)}
+.stat .lab{font-size:12.5px;color:var(--medium);display:flex;gap:6px;align-items:center}
+.stat .lab i{width:8px;height:8px;border-radius:50%;background:var(--c,var(--pink))}
+.stat .num{font-size:28px;font-weight:700;margin-top:6px;line-height:1.1;letter-spacing:.01em}
+.stat .num small{font-size:13px;font-weight:500;color:var(--medium);margin-left:3px}
+.stat .cap{font-size:11.5px;color:var(--gray);margin-top:3px}
+.stat.pink{background:var(--light-pink);border-color:transparent}
+.stat.blue{background:var(--light-blue);border-color:transparent}
+.stat.sage{background:var(--light-sage);border-color:transparent}
+.stat.cream{background:var(--cream);border-color:transparent}
+.dash-two{display:grid;gap:12px}
+.dash-two>*{min-width:0}
+@media(min-width:720px){.dash-two{grid-template-columns:1.2fr 1fr}}
+.today-strip{display:flex;gap:8px;overflow-x:auto;padding:10px 0 4px}
+.today-strip div{width:64px;height:64px;border-radius:12px;background:var(--cream) center/cover;flex-shrink:0}
+.mood-list{list-style:none;margin-top:8px}
+.mood-list li{padding:10px 0;border-bottom:1px dashed var(--line);font-size:14px;line-height:1.6}
+.mood-list li:last-child{border-bottom:0}
+.mood-list .when{font-size:11.5px;color:var(--gray)}
+.hello{display:flex;align-items:center;gap:12px}
+.logo{width:44px;height:44px;border-radius:14px;background:var(--light-pink);display:grid;place-items:center;color:var(--pink)}
+.logo svg{width:24px;height:24px}
+
+/* ---------- settings ---------- */
+.set-grid{display:grid;gap:12px}
+@media(min-width:760px){.set-grid{grid-template-columns:1fr 1fr}}
+.set-grid .card h3{margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.set-grid .card h3 i{width:8px;height:8px;border-radius:50%;background:var(--c,var(--pink))}
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #F4EEE8;font-size:14px}
+.set-row:last-child{border-bottom:0}
+.set-row .input{max-width:58%}
+.set-row select.input{width:auto;min-width:130px}
+.set-row small{display:block;color:var(--gray);font-size:11.5px}
+
+/* ---------- modal ---------- */
+.modal{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.modal-backdrop{position:absolute;inset:0;background:rgba(55,53,47,.38);opacity:0;transition:opacity .2s}
+.sheet{position:relative;background:var(--bg);width:100%;max-width:560px;max-height:94vh;max-height:94dvh;overflow-y:auto;border-radius:22px 22px 0 0;padding:16px 16px calc(18px + env(safe-area-inset-bottom));transform:translateY(30px);opacity:0;transition:transform .22s,opacity .22s}
+.modal.show .modal-backdrop{opacity:1}
+.modal.show .sheet{transform:none;opacity:1}
+@media(min-width:640px){.modal{align-items:center}.sheet{border-radius:22px;padding-bottom:20px}}
+.modal.center{align-items:center}
+.modal.center .sheet{max-width:340px;border-radius:20px;margin:16px}
+.modal.wide .sheet{max-width:780px}
+.sheet-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+.x{width:34px;height:34px;border-radius:50%;background:#F1EBE5;font-size:20px;line-height:1;color:var(--medium);flex-shrink:0}
+.dialog p{font-size:15px;line-height:1.7;margin:6px 2px 16px;white-space:pre-line}
+.media-box{display:flex;justify-content:center;background:#EFE7DF;border-radius:16px;overflow:hidden;margin-bottom:14px;container-type:inline-size}
+.media-in{position:relative;display:inline-block;max-width:100%}
+.media-in img,.media-in video{display:block;max-width:100%;max-height:42vh;max-height:42dvh}
+.media-in .stamp-ov{font-size:clamp(10px,3cqi,16px)}
+.media-in .stamp-ov.tl{top:12px;left:12px}.media-in .stamp-ov.tr{top:12px;right:12px}
+.media-in .stamp-ov.bl{bottom:12px;left:12px}.media-in .stamp-ov.br{bottom:12px;right:12px}
+.media-in video ~ .stamp-ov.bl,.media-in video ~ .stamp-ov.br{bottom:64px}
+.form{display:grid;gap:12px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stamp-box{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;display:grid;gap:10px}
+.actions{margin-top:16px;gap:8px}
+.info-line{font-size:12px;color:var(--gray);margin-top:2px}
+.missing{padding:40px;color:var(--gray);font-size:14px}
+
+/* vlog editor */
+.vopts{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+@media(min-width:640px){.vopts{grid-template-columns:repeat(4,1fr)}}
+.vopts .full{grid-column:1/-1}
+.checks{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13.5px;color:var(--medium)}
+.checks label{display:flex;align-items:center;gap:8px}
+.vlist-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:6px 0 10px}
+.vlist{display:grid;gap:8px}
+.vrow{display:grid;grid-template-columns:20px 54px 1fr auto;gap:10px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:14px;padding:8px 10px 8px 8px}
+.vrow.off{opacity:.5}
+.vrow .n{font-size:12px;color:var(--gray);text-align:center}
+.vth{width:54px;height:54px;border-radius:10px;background:var(--cream) center/cover;position:relative}
+.vth i{position:absolute;right:4px;bottom:3px;color:#fff;font-size:10px;font-style:normal;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+.vinfo{min-width:0}
+.vinfo .t{font-size:12px;color:var(--gray);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vinfo .m{font-size:13.5px;color:var(--medium);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vact{display:flex;align-items:center;gap:4px}
+.mini{width:30px;height:30px;border-radius:9px;background:#F5F0EB;color:var(--medium);font-size:14px;display:grid;place-items:center}
+.vfoot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:16px;position:sticky;bottom:-18px;background:var(--bg);padding:10px 0 4px;flex-wrap:wrap}
+.est{font-size:13px;color:var(--medium)}
+.render{display:grid;gap:12px;justify-items:center;text-align:center}
+.render canvas,.render video{max-width:100%;max-height:52vh;max-height:52dvh;border-radius:14px;background:#EFE7DF;display:block}
+.prog{display:flex;align-items:center;gap:10px;width:100%;max-width:420px}
+.bar{flex:1;height:8px;background:#EFE7DF;border-radius:999px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--soft-pink),var(--pink));border-radius:999px;transition:width .2s}
+.pct{font-size:13px;font-weight:700;color:var(--pink);width:40px}
+
+/* toast & busy */
+#toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translate(-50%,10px);background:rgba(55,53,47,.92);color:#fff;font-size:13.5px;padding:10px 16px;border-radius:999px;opacity:0;transition:.25s;z-index:80;pointer-events:none;max-width:88vw;text-align:center}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#busy{position:fixed;inset:0;z-index:70;background:rgba(250,243,238,.75);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;font-size:14px;color:var(--medium)}
+.spin{width:34px;height:34px;border:3px solid var(--light-pink);border-top-color:var(--pink);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div id="app">
+<main>
+  <!-- ================= 拍攝 ================= -->
+  <section id="page-capture" class="page active">
+    <div class="cap-top">
+      <div class="seg" id="ratio-seg">
+        <button data-r="16:9">16:9</button><button data-r="1:1">1:1</button><button data-r="4:3">4:3</button>
+      </div>
+      <div class="cap-tools">
+        <button class="icon-btn txt" id="btn-orient" title="切換直式／橫式">直式</button>
+        <button class="icon-btn" id="btn-beauty" title="美顏設定" data-panel="panel-beauty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M18.5 15.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/></svg></button>
+        <button class="icon-btn" id="btn-bright" title="畫面明暗" data-panel="panel-bright"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></svg></button>
+        <button class="icon-btn" id="btn-stamp" title="時間戳記" data-panel="panel-stamp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></button>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-beauty">
+      <div class="panel-head"><b>美顏設定</b><span class="hint">瘦臉、大眼為簡易效果（以畫面中央為準）</span></div>
+      <div class="slider-row"><span>瘦臉</span><input type="range" min="0" max="100" data-b="slim"><output></output></div>
+      <div class="slider-row"><span>大眼</span><input type="range" min="0" max="100" data-b="eyes"><output></output></div>
+      <div class="slider-row"><span>皮膚</span><input type="range" min="0" max="100" data-b="smooth"><output></output></div>
+      <div class="slider-row"><span>膚色</span><input type="range" min="-50" max="50" data-b="tone"><output></output></div>
+      <div class="row between" style="margin-top:8px">
+        <span class="hint">膚色：往左白皙、往右紅潤</span>
+        <div class="row gap"><button class="btn ghost sm" id="beauty-reset">重設</button><button class="btn primary sm" id="beauty-save">儲存設定</button></div>
+      </div>
+    </div>
+    <div class="panel" id="panel-bright">
+      <div class="panel-head"><b>畫面明暗</b><span class="hint">會自動記住</span></div>
+      <div class="slider-row"><span>明暗</span><input type="range" min="-50" max="50" id="bright-range"><output id="bright-out"></output></div>
+    </div>
+    <div class="panel" id="panel-stamp">
+      <div class="panel-head"><b>時間戳記</b><span class="hint">點畫面上的時間也能換位置</span></div>
+      <div class="row gap wrap" style="padding:4px 0">
+        <label class="switch"><input type="checkbox" id="stamp-show"><span></span></label><span style="font-size:13px;color:var(--medium);margin-right:6px">顯示</span>
+        <div class="seg sm" id="stamp-pos-seg"></div>
+        <select class="input sm" id="stamp-format">
+          <option value="datetime">日期＋時間</option><option value="date">只有日期</option><option value="time">只有時間</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="stage" id="stage">
+      <div class="frame" id="frame">
+        <canvas id="cam-canvas" width="720" height="1280"></canvas>
+        <div class="stamp-ov br" id="live-stamp" title="點一下換位置"></div>
+        <div class="rec-badge" id="rec-badge" hidden></div>
+        <div class="cam-fallback" id="cam-fallback" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/><path d="M3 3l18 18" stroke-linecap="round"/></svg>
+          <b>無法開啟相機</b>
+          <span id="cam-msg"></span>
+          <div class="row gap wrap center">
+            <button class="btn primary sm" id="cam-upload">上傳照片／影片</button>
+            <button class="btn ghost sm" id="cam-retry">重試</button>
+          </div>
+        </div>
+        <div class="flash" id="flash"></div>
+      </div>
+    </div>
+
+    <div class="zoom-row">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5M8 11h6"/></svg>
+      <input type="range" id="zoom" min="1" max="4" step="0.05" value="1">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5M8 11h6M11 8v6"/></svg>
+      <span id="zoom-val">1.0x</span>
+    </div>
+
+    <div class="cap-bottom">
+      <button class="pill-btn" id="btn-dur" title="錄影秒數"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 1.5M9.5 2.5h5"/></svg><span>3秒</span></button>
+      <div class="shutters">
+        <div class="sh-wrap"><button class="shutter photo" id="btn-photo" aria-label="拍照"><span class="dot"></span></button>拍照</div>
+        <div class="sh-wrap"><button class="shutter video" id="btn-video" aria-label="錄影"><span class="dot"></span></button><span id="video-label">錄影</span></div>
+      </div>
+      <button class="icon-btn big" id="btn-flip" title="切換前後鏡頭"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12a7.5 7.5 0 0 1 13-5.1M19.5 12a7.5 7.5 0 0 1-13 5.1"/><path d="M18 3v4h-4M6 21v-4h4"/></svg></button>
+    </div>
+  </section>
+
+  <!-- ================= 日誌 ================= -->
+  <section id="page-journal" class="page">
+    <div class="container">
+      <div class="page-head">
+        <div><h1>日誌</h1><p class="sub" id="j-sub"></p></div>
+        <button class="btn primary" id="j-add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>新增影像</button>
+      </div>
+      <div class="toolbar">
+        <label class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><input id="j-q" type="search" placeholder="搜尋心情小語、日期…"></label>
+        <div class="seg" id="j-type"><button data-v="all" class="on">全部</button><button data-v="photo">照片</button><button data-v="video">影片</button></div>
+        <input type="date" class="input sm" id="j-date" title="篩選日期">
+        <select class="input sm" id="j-sort"><option value="desc">新到舊</option><option value="asc">舊到新</option></select>
+        <button class="btn ghost sm" id="j-clear" hidden>清除篩選</button>
+      </div>
+      <div id="j-list"></div>
+    </div>
+  </section>
+
+  <!-- ================= 儀表板 ================= -->
+  <section id="page-dashboard" class="page"><div class="container" id="dash"></div></section>
+
+  <!-- ================= 設定 ================= -->
+  <section id="page-settings" class="page"><div class="container" id="settings-root"></div></section>
+</main>
+
+<nav class="tabbar">
+  <button class="tab active" data-page="capture"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>拍攝</button>
+  <button class="tab" data-page="journal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M6 3.5h11a2 2 0 0 1 2 2v15H8a2 2 0 0 1-2-2z"/><path d="M6 18.5a2 2 0 0 1 2-2h11M10 8h5M10 11.5h3"/></svg>日誌</button>
+  <button class="tab" data-page="dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="4" y="4" width="7" height="9" rx="2"/><rect x="13" y="4" width="7" height="5" rx="2"/><rect x="13" y="11" width="7" height="9" rx="2"/><rect x="4" y="15" width="7" height="5" rx="2"/></svg>儀表板</button>
+  <button class="tab" data-page="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2.2"/><circle cx="9" cy="17" r="2.2"/></svg>設定</button>
+</nav>
+</div>
+<div id="toast"></div>
+<div id="busy" hidden><div class="spin"></div><span id="busy-msg"></span></div>
+
+<script>
+'use strict';
+/* =========================================================
+   沙漏 Salog — 單檔版
+   紀錄與設定：localStorage；照片／影片檔案：IndexedDB（瀏覽器內建，容量較大）
+   ========================================================= */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const pad = n => String(n).padStart(2, '0');
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const WEEK = ['日', '一', '二', '三', '四', '五', '六'];
+const POS = [{ v: 'tl', l: '左上' }, { v: 'tr', l: '右上' }, { v: 'bl', l: '左下' }, { v: 'br', l: '右下' }];
+const fmtDate = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const fmtTime = d => `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+const dotDate = ds => (ds || '').replaceAll('-', '.');
+const weekday = ds => { const [y, m, d] = ds.split('-').map(Number); return WEEK[new Date(y, m - 1, d).getDay()]; };
+const fmtDur = s => { s = Math.round(s || 0); return `${Math.floor(s / 60)}:${pad(s % 60)}`; };
+const fmtSize = b => b > 1e9 ? (b / 1e9).toFixed(1) + ' GB' : b > 1e6 ? (b / 1e6).toFixed(1) + ' MB' : Math.max(1, Math.round(b / 1e3)) + ' KB';
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const today = () => fmtDate(new Date());
+const baseMime = m => (m || '').split(';')[0];
+
+/* ---------------- storage ---------------- */
+const K = { rec: 'salog.records', set: 'salog.settings', ord: 'salog.orders', vlog: 'salog.vlogs' };
+const LS = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { toast('瀏覽器儲存空間不足，請先匯出備份或刪除部分紀錄'); return false; } }
+};
+const DEFAULTS = {
+  profile: { name: '', bio: '' },
+  capture: { duration: '3', ratio: '16:9', orient: 'portrait', mirror: true, audio: true, tlInterval: 1 },
+  beauty: { slim: 0, eyes: 0, smooth: 0, tone: 0 },
+  brightness: 0,
+  stamp: { show: true, pos: 'br', format: 'datetime' },
+  vlog: { ratio: '9:16', photoSec: 3, maxClipSec: 10, showMood: true, intro: true, keepAudio: true, fit: 'blur' }
+};
+function deepMerge(base, over) {
+  const out = Array.isArray(base) ? [...base] : { ...base };
+  for (const k in over || {}) {
+    if (over[k] && typeof over[k] === 'object' && !Array.isArray(over[k]) && base[k] && typeof base[k] === 'object') out[k] = deepMerge(base[k], over[k]);
+    else if (over[k] !== undefined) out[k] = over[k];
+  }
+  return out;
+}
+let settings = deepMerge(DEFAULTS, LS.get(K.set, {}));
+let records = LS.get(K.rec, []);
+let orders = LS.get(K.ord, {});
+let vlogIndex = LS.get(K.vlog, {});
+const saveSettings = () => LS.set(K.set, settings);
+const saveRecords = () => LS.set(K.rec, records);
+const saveOrders = () => LS.set(K.ord, orders);
+const saveVlogIndex = () => LS.set(K.vlog, vlogIndex);
+const getRec = id => records.find(r => r.id === id);
+const byTime = (a, b) => (a.date + a.time).localeCompare(b.date + b.time) || a.createdAt - b.createdAt;
+
+const IDB = (() => {
+  let dbp;
+  function open() {
+    if (dbp) return dbp;
+    dbp = new Promise((res, rej) => {
+      const r = indexedDB.open('salog', 1);
+      r.onupgradeneeded = () => {
+        const db = r.result;
+        if (!db.objectStoreNames.contains('media')) db.createObjectStore('media');
+        if (!db.objectStoreNames.contains('vlogs')) db.createObjectStore('vlogs');
+      };
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => rej(r.error);
+    });
+    return dbp;
+  }
+  async function tx(store, mode, fn) {
+    const db = await open();
+    return new Promise((res, rej) => {
+      const t = db.transaction(store, mode);
+      const req = fn(t.objectStore(store));
+      t.oncomplete = () => res(req ? req.result : undefined);
+      t.onerror = () => rej(t.error);
+      t.onabort = () => rej(t.error || new Error('儲存失敗'));
+    });
+  }
+  return {
+    get: (s, k) => tx(s, 'readonly', st => st.get(k)),
+    put: (s, k, v) => tx(s, 'readwrite', st => st.put(v, k)),
+    del: (s, k) => tx(s, 'readwrite', st => st.delete(k)),
+    clear: s => tx(s, 'readwrite', st => st.clear())
+  };
+})();
+
+/* ---------------- UI helpers ---------------- */
+let toastTimer;
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+}
+function showBusy(msg) { $('#busy-msg').textContent = msg || ''; $('#busy').hidden = false; }
+function hideBusy() { $('#busy').hidden = true; }
+function openModal(html, { cls = '' } = {}) {
+  const wrap = document.createElement('div');
+  wrap.className = 'modal ' + cls;
+  wrap.innerHTML = `<div class="modal-backdrop"></div><div class="sheet">${html}</div>`;
+  document.body.appendChild(wrap);
+  requestAnimationFrame(() => wrap.classList.add('show'));
+  let closed = false;
+  wrap.close = () => {
+    if (closed) return; closed = true;
+    wrap.dispatchEvent(new Event('close'));
+    wrap.classList.remove('show');
+    setTimeout(() => wrap.remove(), 220);
+  };
+  $('.modal-backdrop', wrap).onclick = () => { if (!wrap.dataset.lock) wrap.close(); };
+  $$('[data-close]', wrap).forEach(b => b.onclick = () => { if (!wrap.dataset.lock) wrap.close(); });
+  return wrap;
+}
+function confirmBox(msg, okText = '確定', danger = false) {
+  return new Promise(res => {
+    const m = openModal(`<div class="dialog"><p>${esc(msg)}</p><div class="row end gap"><button class="btn ghost" data-act="no">取消</button><button class="btn ${danger ? 'danger' : 'primary'}" data-act="ok">${okText}</button></div></div>`, { cls: 'center' });
+    let v = false;
+    $('[data-act=ok]', m).onclick = () => { v = true; m.close(); };
+    $('[data-act=no]', m).onclick = () => m.close();
+    m.addEventListener('close', () => res(v));
+  });
+}
+function pickFiles(multiple = true, accept = 'image/*,video/*') {
+  return new Promise(res => {
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = accept; inp.multiple = multiple;
+    inp.style.display = 'none'; document.body.appendChild(inp);
+    inp.onchange = () => { res([...inp.files]); inp.remove(); };
+    inp.click();
+  });
+}
+let dlCap;
+async function downloadBlob(blob, name) {
+  // 發佈成網頁版時，用平台的下載功能（會先跳出確認）
+  if (window.claude && window.claude.use) {
+    if (dlCap === undefined) { try { dlCap = await window.claude.use('downloads'); } catch (e) { dlCap = null; } }
+    if (dlCap) {
+      try { await dlCap.save({ filename: name, data: blob }); } catch (e) { if (e && e.code !== 'declined') toast('無法下載：' + (e.message || e.code)); }
+      return;
+    }
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+const once = (el, ev, timeout = 5000) => new Promise(res => {
+  let done = false; const f = () => { if (!done) { done = true; el.removeEventListener(ev, f); res(true); } };
+  el.addEventListener(ev, f); setTimeout(() => { if (!done) { done = true; el.removeEventListener(ev, f); res(false); } }, timeout);
+});
+function loadImg(url) {
+  return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('圖片無法讀取')); i.src = url; });
+}
+function loadVideo(url) {
+  return new Promise((res, rej) => {
+    const v = document.createElement('video');
+    v.preload = 'auto'; v.muted = true; v.playsInline = true; v.setAttribute('playsinline', '');
+    const to = setTimeout(() => rej(new Error('影片載入逾時')), 12000);
+    v.onloadeddata = () => { clearTimeout(to); res(v); };
+    v.onerror = () => { clearTimeout(to); rej(new Error('影片格式不支援')); };
+    v.src = url; v.load();
+  });
+}
+async function probeDuration(v) {
+  if (isFinite(v.duration) && v.duration > 0) return v.duration;
+  // MediaRecorder 錄出的 webm 沒有長度資訊：跳到很後面讓瀏覽器算出來
+  v.currentTime = 1e7;
+  await once(v, 'seeked', 3000);
+  const d = isFinite(v.duration) ? v.duration : v.currentTime;
+  v.currentTime = 0; await once(v, 'seeked', 2000);
+  return d || 0;
+}
+function makeThumb(src, sw, sh, max = 360) {
+  const s = Math.min(1, max / Math.max(sw, sh));
+  const c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(sw * s)); c.height = Math.max(1, Math.round(sh * s));
+  c.getContext('2d').drawImage(src, 0, 0, c.width, c.height);
+  return c.toDataURL('image/jpeg', 0.72);
+}
+function pickMime(audio) {
+  if (!window.MediaRecorder) return null;
+  const list = audio
+    ? ['video/mp4;codecs=avc1,mp4a.40.2', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/mp4', 'video/webm']
+    : ['video/mp4;codecs=avc1', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/mp4', 'video/webm'];
+  return list.find(t => { try { return MediaRecorder.isTypeSupported(t); } catch (e) { return false; } }) || '';
+}
+/* MediaRecorder 錄出的 webm 沒有寫入影片長度，播放器會無法拖曳；這裡補上 Duration */
+async function fixWebmDuration(blob, seconds) {
+  if (!/webm/.test(blob.type) || !(seconds > 0)) return blob;
+  try {
+    const h = new Uint8Array(await blob.slice(0, 65536).arrayBuffer());
+    const find = (sig, from = 0) => { outer: for (let i = from; i < h.length - sig.length; i++) { for (let j = 0; j < sig.length; j++) if (h[i + j] !== sig[j]) continue outer; return i; } return -1; };
+    const vlen = b => { let n = 1, m = 0x80; while (n <= 8 && !(b & m)) { n++; m >>= 1; } return n; };
+    const vint = p => { const n = vlen(h[p]); let v = h[p] & ((0x80 >> (n - 1)) - 1); for (let i = 1; i < n; i++) v = v * 256 + h[p + i]; return { n, v }; };
+    const seg = find([0x18, 0x53, 0x80, 0x67]); if (seg < 0) return blob;
+    const sn = vlen(h[seg + 4]);
+    let unknown = (h[seg + 4] & ((0x80 >> (sn - 1)) - 1)) === ((0x80 >> (sn - 1)) - 1);
+    for (let i = 1; i < sn; i++) if (h[seg + 4 + i] !== 0xFF) unknown = false;
+    if (!unknown) return blob;
+    const info = find([0x15, 0x49, 0xA9, 0x66], seg); if (info < 0) return blob;
+    const seek = find([0x11, 0x4D, 0x9B, 0x74], seg); if (seek >= 0 && seek < info) return blob;
+    const sz = vint(info + 4), cStart = info + 4 + sz.n, cEnd = cStart + sz.v;
+    if (cEnd > h.length) return blob;
+    let p = cStart, scale = 1e6;
+    while (p < cEnd) {
+      const idn = vlen(h[p]); let id = 0; for (let i = 0; i < idn; i++) id = id * 256 + h[p + i];
+      const l = vint(p + idn), d = p + idn + l.n;
+      if (id === 0x4489) return blob;
+      if (id === 0x2AD7B1) { scale = 0; for (let i = 0; i < l.v; i++) scale = scale * 256 + h[d + i]; }
+      p = d + l.v;
+    }
+    const dur = new Uint8Array(11); dur.set([0x44, 0x89, 0x88]);
+    new DataView(dur.buffer).setFloat64(3, seconds * 1e9 / (scale || 1e6));
+    const size = sz.v + 11, hdr = new Uint8Array(12);
+    hdr.set([0x15, 0x49, 0xA9, 0x66, 0x01]);
+    for (let i = 0, v = size; i < 7; i++) { hdr[11 - i] = v % 256; v = Math.floor(v / 256); }
+    return new Blob([blob.slice(0, info), hdr, h.slice(cStart, cEnd), dur, blob.slice(cEnd)], { type: blob.type });
+  } catch (e) { return blob; }
+}
+const extOf = mime => (mime || '').includes('mp4') ? 'mp4' : 'webm';
+function blobToDataURL(b) { return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(b); }); }
+async function dataURLToBlob(d) { return (await fetch(d)).blob(); }
+
+/* 讀取 JPEG 的 EXIF 拍攝時間 */
+async function exifDate(file) {
+  try {
+    if (!/jpe?g/i.test(file.type) && !/\.jpe?g$/i.test(file.name)) return null;
+    const buf = await file.slice(0, 256 * 1024).arrayBuffer();
+    const v = new DataView(buf);
+    if (v.getUint16(0) !== 0xFFD8) return null;
+    let off = 2;
+    while (off + 4 < v.byteLength) {
+      const marker = v.getUint16(off), len = v.getUint16(off + 2);
+      if (marker === 0xFFE1 && v.getUint32(off + 4) === 0x45786966) {
+        const tiff = off + 10, le = v.getUint16(tiff) === 0x4949;
+        const g16 = o => v.getUint16(o, le), g32 = o => v.getUint32(o, le);
+        const ifd = p => { const n = g16(p), t = {}; for (let i = 0; i < n; i++) { const e = p + 2 + i * 12; t[g16(e)] = { count: g32(e + 4), at: e + 8 }; } return t; };
+        const str = t => { if (!t) return null; const o = t.count > 4 ? tiff + g32(t.at) : t.at; let s = ''; for (let i = 0; i < t.count - 1 && o + i < v.byteLength; i++) s += String.fromCharCode(v.getUint8(o + i)); return s; };
+        const i0 = ifd(tiff + g32(tiff + 4));
+        let dt = null;
+        if (i0[0x8769]) { const ex = ifd(tiff + g32(i0[0x8769].at)); dt = str(ex[0x9003]) || str(ex[0x9004]); }
+        dt = dt || str(i0[0x0132]);
+        const m = dt && dt.match(/(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})/);
+        return m ? new Date(+m[1], m[2] - 1, +m[3], +m[4], +m[5], +m[6]) : null;
+      }
+      if ((marker & 0xFF00) !== 0xFF00) break;
+      off += 2 + len;
+    }
+  } catch (e) { }
+  return null;
+}
+
+/* ---------------- 時間戳記 ---------------- */
+function stampText(r, fmt = settings.stamp.format) {
+  if (r.stamp && r.stamp.text) return r.stamp.text;
+  const d = dotDate(r.date), t = (r.time || '').slice(0, 5);
+  return fmt === 'date' ? d : fmt === 'time' ? t : `${d}  ${t}`;
+}
+function drawStamp(ctx, text, pos, W, H) {
+  const s = Math.min(W, H), fs = Math.round(s * 0.034), m = s * 0.045;
+  ctx.save();
+  ctx.font = `500 ${fs}px "Noto Sans TC", sans-serif`;
+  ctx.textBaseline = pos[0] === 't' ? 'top' : 'bottom';
+  ctx.textAlign = pos[1] === 'l' ? 'left' : 'right';
+  ctx.shadowColor = 'rgba(0,0,0,.4)'; ctx.shadowBlur = fs * 0.4;
+  ctx.fillStyle = 'rgba(255,248,240,.96)';
+  ctx.fillText(text, pos[1] === 'l' ? m : W - m, pos[0] === 't' ? m : H - m);
+  ctx.restore();
+}
+
+/* =========================================================
+   美顏／畫面處理（Canvas 簡易效果）
+   ========================================================= */
+const FX = (() => {
+  const tmp = document.createElement('canvas'), tctx = tmp.getContext('2d');
+  const small = document.createElement('canvas'), sctx = small.getContext('2d');
+  const eye = document.createElement('canvas'), ectx = eye.getContext('2d', { willReadFrequently: true });
+  const filterOK = (() => { try { const c = document.createElement('canvas').getContext('2d'); c.filter = 'blur(1px)'; return c.filter === 'blur(1px)'; } catch (e) { return false; } })();
+  const warp = (u, a) => u + a * Math.sin(2 * Math.PI * (u - 0.5)) / (2 * Math.PI);
+
+  function render(ctx, src, sw, sh, W, H, o) {
+    if (tmp.width !== W || tmp.height !== H) { tmp.width = W; tmp.height = H; }
+    const scale = Math.max(W / sw, H / sh) * (o.zoom || 1);
+    const cw = W / scale, ch = H / scale, cx = (sw - cw) / 2, cy = (sh - ch) / 2;
+    const b = 1 + (o.bright || 0) / 100;
+    const tone = (o.tone || 0) / 100;
+    tctx.save();
+    tctx.setTransform(1, 0, 0, 1, 0, 0);
+    if (o.mirror) { tctx.translate(W, 0); tctx.scale(-1, 1); }
+    if (filterOK) tctx.filter = `brightness(${b}) saturate(${1 + tone * 0.35})`;
+    const a = (o.slim || 0) / 100 * 0.22;
+    if (a > 0.002) {
+      // 瘦臉：畫面中央水平收窄、兩側放寬
+      const N = 40;
+      for (let i = 0; i < N; i++) {
+        const u0 = i / N, u1 = (i + 1) / N, s0 = warp(u0, a), s1 = warp(u1, a);
+        tctx.drawImage(src, cx + s0 * cw, cy, (s1 - s0) * cw, ch, u0 * W, 0, W / N + 0.8, H);
+      }
+    } else tctx.drawImage(src, cx, cy, cw, ch, 0, 0, W, H);
+    tctx.restore();
+    if (!filterOK && b !== 1) {
+      tctx.fillStyle = b > 1 ? `rgba(255,255,255,${(b - 1) * 0.6})` : `rgba(0,0,0,${(1 - b) * 0.8})`;
+      tctx.fillRect(0, 0, W, H);
+    }
+    if (o.smooth > 0) {
+      // 皮膚：柔焦疊加
+      small.width = Math.max(1, Math.round(W / 5)); small.height = Math.max(1, Math.round(H / 5));
+      sctx.imageSmoothingQuality = 'high';
+      sctx.drawImage(tmp, 0, 0, small.width, small.height);
+      tctx.save(); tctx.globalAlpha = o.smooth / 100 * 0.5; tctx.imageSmoothingQuality = 'high';
+      tctx.drawImage(small, 0, 0, W, H); tctx.restore();
+    }
+    ctx.drawImage(tmp, 0, 0);
+    if (o.eyes > 0) {
+      // 大眼：以畫面中央偏上為中心的平滑放大（簡易效果，沒有臉部辨識）
+      const k = o.eyes / 100 * 0.32, R = Math.round(Math.min(W, H) * 0.24);
+      const x0 = Math.round(W / 2 - R), y0 = Math.round(H * 0.42 - R), D = R * 2;
+      if (x0 >= 0 && y0 >= 0 && x0 + D <= W && y0 + D <= H) {
+        if (eye.width !== D) { eye.width = D; eye.height = D; }
+        ectx.clearRect(0, 0, D, D); ectx.drawImage(ctx.canvas, x0, y0, D, D, 0, 0, D, D);
+        const sp = ectx.getImageData(0, 0, D, D).data;
+        const out = ectx.createImageData(D, D), op = out.data;
+        for (let y = 0; y < D; y++) {
+          const dy = y - R;
+          for (let x = 0; x < D; x++) {
+            const dx = x - R, i = (y * D + x) * 4, rr = (dx * dx + dy * dy) / (R * R);
+            let sx = x, sy = y;
+            if (rr < 1) { const f = 1 - k * (1 - rr) * (1 - rr); sx = Math.round(R + dx * f); sy = Math.round(R + dy * f); }
+            const j = (sy * D + sx) * 4;
+            op[i] = sp[j]; op[i + 1] = sp[j + 1]; op[i + 2] = sp[j + 2]; op[i + 3] = 255;
+          }
+        }
+        ectx.putImageData(out, 0, 0); ctx.drawImage(eye, x0, y0);
+      }
+    }
+    if (tone !== 0) {
+      ctx.save();
+      if (tone > 0) { ctx.globalCompositeOperation = 'soft-light'; ctx.fillStyle = `rgba(236,150,140,${tone * 1.1})`; }
+      else { ctx.globalCompositeOperation = 'screen'; ctx.fillStyle = `rgba(255,248,242,${-tone * 0.4})`; }
+      ctx.fillRect(0, 0, W, H); ctx.restore();
+    }
+  }
+  return { render };
+})();
+
+/* =========================================================
+   相機
+   ========================================================= */
+const Cam = (() => {
+  const canvas = $('#cam-canvas'), ctx = canvas.getContext('2d');
+  const frame = $('#frame'), stage = $('#stage');
+  const video = document.createElement('video');
+  video.muted = true; video.playsInline = true; video.setAttribute('playsinline', ''); video.autoplay = true;
+  let stream = null, facing = 'environment', running = false, raf = 0, tl = null, recorder = null;
+  const st = { zoom: 1, dur: String(settings.capture.duration), busy: false, recording: false };
+  const live = { beauty: { ...settings.beauty } };
+  const TL_MAX = 150;
+
+  function dims() {
+    const [a, b] = settings.capture.ratio.split(':').map(Number);
+    let w = 1280, h = Math.round(1280 * b / a);
+    if (a === b) w = h = 1080;
+    if (settings.capture.orient === 'portrait') [w, h] = [h, w];
+    return [w, h];
+  }
+  function fit() {
+    const aw = stage.clientWidth - 24, ah = stage.clientHeight - 4;
+    if (aw <= 0 || ah <= 0) return;
+    const r = canvas.width / canvas.height;
+    let w = aw, h = w / r;
+    if (h > ah) { h = ah; w = h * r; }
+    frame.style.width = Math.floor(w) + 'px'; frame.style.height = Math.floor(h) + 'px';
+  }
+  function applyLayout() {
+    const [w, h] = dims();
+    if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+    fit(); syncUI();
+  }
+  if (window.ResizeObserver) new ResizeObserver(fit).observe(stage); else addEventListener('resize', fit);
+
+  const hasFeed = () => video.readyState >= 2 && video.videoWidth > 0;
+  const opts = () => ({ zoom: st.zoom, mirror: facing === 'user' && settings.capture.mirror, ...live.beauty, bright: settings.brightness });
+  function idle() {
+    const W = canvas.width, H = canvas.height;
+    const g = ctx.createLinearGradient(0, 0, W, H);
+    g.addColorStop(0, '#4A453F'); g.addColorStop(1, '#35312C');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    if ($('#cam-fallback').hidden) {
+      ctx.fillStyle = 'rgba(245,237,230,.7)'; ctx.font = `500 ${Math.round(Math.min(W, H) * 0.04)}px "Noto Sans TC", sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('相機準備中…', W / 2, H / 2);
+    }
+  }
+  function loop() {
+    if (!running) return;
+    if (hasFeed()) FX.render(ctx, video, video.videoWidth, video.videoHeight, canvas.width, canvas.height, opts());
+    else idle();
+    raf = requestAnimationFrame(loop);
+  }
+  function stopTracks() { if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; } video.srcObject = null; }
+  function camErr(e) {
+    const n = e && e.name;
+    if ((n === 'NotAllowedError' || n === 'SecurityError') && window.top !== window) return '這個網頁版的相機權限被擋住了，請先用上傳照片與影片。';
+    if (n === 'NotAllowedError' || n === 'SecurityError') return '相機權限被拒絕。請在瀏覽器網址列旁允許使用相機，或改用上傳。';
+    if (n === 'NotFoundError' || n === 'OverconstrainedError') return '找不到可用的相機裝置。';
+    if (n === 'NotReadableError') return '相機正被其他程式使用中。';
+    return '相機無法啟動（' + (n || '未知原因') + '）。';
+  }
+  function showFallback(msg) { $('#cam-msg').textContent = msg; $('#cam-fallback').hidden = false; }
+  async function openStream() {
+    $('#cam-fallback').hidden = true;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      return showFallback(window.isSecureContext ? '這個瀏覽器不支援相機功能。' : '相機需要在 https 網址或本機伺服器上開啟。你仍可以上傳照片與影片。');
+    }
+    stopTracks();
+    const v = { facingMode: { ideal: facing }, width: { ideal: 1920 }, height: { ideal: 1080 } };
+    let s = null;
+    try { s = await navigator.mediaDevices.getUserMedia({ video: v, audio: !!settings.capture.audio }); }
+    catch (e) {
+      if (settings.capture.audio && e.name !== 'NotAllowedError') {
+        try { s = await navigator.mediaDevices.getUserMedia({ video: v }); } catch (e2) { return showFallback(camErr(e2)); }
+      } else if (settings.capture.audio) {
+        try { s = await navigator.mediaDevices.getUserMedia({ video: v }); } catch (e2) { return showFallback(camErr(e2)); }
+      } else return showFallback(camErr(e));
+    }
+    if (!running) { s.getTracks().forEach(t => t.stop()); return; }
+    stream = s; video.srcObject = s;
+    try { await video.play(); } catch (e) { }
+  }
+  async function start() { if (running) return; running = true; applyLayout(); loop(); await openStream(); }
+  function stop() { running = false; cancelAnimationFrame(raf); stopTracks(); }
+  const isBusy = () => st.recording || st.busy;
+
+  function noFeed() { toast('相機尚未就緒，可以改用日誌的「新增影像」上傳'); }
+  function flash() { const f = $('#flash'); f.classList.add('go'); requestAnimationFrame(() => requestAnimationFrame(() => f.classList.remove('go'))); }
+  function badge(t) { const b = $('#rec-badge'); b.hidden = !t; b.textContent = t || ''; }
+  function setRec(on) {
+    st.recording = on;
+    $('#btn-video').classList.toggle('rec', on);
+    $('#video-label').textContent = on ? (st.dur === 'tl' ? '停止' : '錄影中') : '錄影';
+    $('#btn-photo').disabled = on; $('#btn-dur').disabled = on; $('#btn-flip').disabled = on;
+    $$('#ratio-seg button').forEach(b => b.disabled = on); $('#btn-orient').disabled = on;
+    if (!on) badge('');
+  }
+
+  async function takePhoto() {
+    if (isBusy()) return;
+    if (!hasFeed()) return noFeed();
+    flash();
+    const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.92));
+    openCapturePreview({ type: 'photo', blob, thumb: makeThumb(canvas, canvas.width, canvas.height), ts: new Date(), w: canvas.width, h: canvas.height, source: 'camera' });
+  }
+
+  function recordVideo() {
+    if (st.dur === 'tl') return tl ? stopTL() : startTL();
+    if (isBusy()) return;
+    if (!hasFeed()) return noFeed();
+    if (!window.MediaRecorder || !canvas.captureStream) return toast('這個瀏覽器不支援錄影，請改用上傳影片');
+    const secs = +st.dur;
+    const cs = canvas.captureStream(30);
+    const at = stream ? stream.getAudioTracks() : [];
+    at.forEach(t => cs.addTrack(t));
+    const mime = pickMime(at.length > 0);
+    try { recorder = new MediaRecorder(cs, mime ? { mimeType: mime, videoBitsPerSecond: 5e6 } : undefined); }
+    catch (e) { toast('無法開始錄影'); return; }
+    const chunks = [], thumb = makeThumb(canvas, canvas.width, canvas.height), ts = new Date();
+    const rec = recorder;
+    rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+    rec.onstop = async () => {
+      cs.getVideoTracks().forEach(t => t.stop());
+      setRec(false); recorder = null;
+      const blob = await fixWebmDuration(new Blob(chunks, { type: baseMime(rec.mimeType || mime) || 'video/webm' }), secs);
+      openCapturePreview({ type: 'video', blob, thumb, duration: secs, ts, w: canvas.width, h: canvas.height, source: 'camera' });
+    };
+    rec.start(250); setRec(true);
+    const t0 = performance.now();
+    const tick = () => {
+      if (rec.state !== 'recording') return;
+      const el = (performance.now() - t0) / 1000;
+      badge(`● 錄影 ${Math.max(0, secs - el).toFixed(1)} 秒`);
+      if (el >= secs) { rec.stop(); return; }
+      requestAnimationFrame(tick);
+    };
+    tick();
+  }
+
+  function startTL() {
+    if (isBusy()) return;
+    if (!hasFeed()) return noFeed();
+    if (!window.MediaRecorder || !canvas.captureStream) return toast('這個瀏覽器不支援縮時錄影');
+    const iv = (+settings.capture.tlInterval || 1) * 1000;
+    tl = { frames: [], thumb: makeThumb(canvas, canvas.width, canvas.height), ts: new Date() };
+    const cur = tl;
+    const grab = () => canvas.toBlob(b => { if (b && tl === cur) { cur.frames.push(b); if (cur.frames.length >= TL_MAX) stopTL(); } }, 'image/jpeg', 0.85);
+    grab();
+    cur.timer = setInterval(grab, iv);
+    cur.badgeTimer = setInterval(() => badge(`● 縮時 ${cur.frames.length} 張 · 再按一次停止`), 250);
+    setRec(true);
+  }
+  async function stopTL() {
+    if (!tl) return;
+    const cur = tl; tl = null;
+    clearInterval(cur.timer); clearInterval(cur.badgeTimer);
+    await new Promise(r => canvas.toBlob(b => { if (b) cur.frames.push(b); r(); }, 'image/jpeg', 0.85));
+    setRec(false);
+    if (cur.frames.length < 3) { toast('縮時拍攝太短了，多錄幾秒吧'); return; }
+    st.busy = true; showBusy('縮時影片生成中…');
+    try {
+      const { blob, duration } = await encodeFrames(cur.frames, canvas.width, canvas.height, 10);
+      hideBusy();
+      openCapturePreview({ type: 'video', blob, thumb: cur.thumb, duration, ts: cur.ts, w: canvas.width, h: canvas.height, source: 'camera', timelapse: true });
+    } catch (e) { console.error(e); hideBusy(); toast('縮時影片生成失敗'); }
+    finally { st.busy = false; }
+  }
+
+  function setZoom(z) {
+    st.zoom = Math.min(4, Math.max(1, z));
+    $('#zoom').value = st.zoom; $('#zoom-val').textContent = st.zoom.toFixed(1) + 'x';
+  }
+  async function flip() {
+    if (isBusy()) return;
+    facing = facing === 'user' ? 'environment' : 'user';
+    if (running) await openStream();
+    toast(facing === 'user' ? '前鏡頭' : '後鏡頭');
+  }
+  const DUR = ['3', '5', 'tl'];
+  const durLabel = d => d === 'tl' ? '縮時' : d + '秒';
+  function cycleDur() { if (isBusy()) return; st.dur = DUR[(DUR.indexOf(st.dur) + 1) % DUR.length]; syncUI(); toast(st.dur === 'tl' ? '縮時：按錄影開始，再按一次停止' : `錄影 ${st.dur} 秒`); }
+  function setDefaultDur(d) { if (!isBusy()) { st.dur = String(d); syncUI(); } }
+
+  function syncUI() {
+    $$('#ratio-seg button').forEach(b => b.classList.toggle('on', b.dataset.r === settings.capture.ratio));
+    $('#btn-orient').textContent = settings.capture.orient === 'portrait' ? '直式' : '橫式';
+    $('#btn-dur span').textContent = durLabel(st.dur);
+    $$('#panel-beauty [data-b]').forEach(i => { i.value = live.beauty[i.dataset.b]; i.nextElementSibling.textContent = live.beauty[i.dataset.b]; });
+    $('#bright-range').value = settings.brightness; $('#bright-out').textContent = settings.brightness;
+    $('#stamp-show').checked = settings.stamp.show;
+    $('#stamp-format').value = settings.stamp.format;
+    $('#stamp-pos-seg').innerHTML = POS.map(p => `<button data-v="${p.v}" class="${settings.stamp.pos === p.v ? 'on' : ''}">${p.l}</button>`).join('');
+    updateLiveStamp();
+  }
+  function updateLiveStamp() {
+    const el = $('#live-stamp'), now = new Date();
+    el.hidden = !settings.stamp.show;
+    el.className = 'stamp-ov ' + settings.stamp.pos;
+    el.textContent = stampText({ date: fmtDate(now), time: fmtTime(now) });
+  }
+  setInterval(() => { if (running) updateLiveStamp(); }, 1000);
+
+  // ---- 事件 ----
+  $('#btn-photo').onclick = takePhoto;
+  $('#btn-video').onclick = recordVideo;
+  $('#btn-flip').onclick = flip;
+  $('#btn-dur').onclick = cycleDur;
+  $('#zoom').oninput = e => setZoom(+e.target.value);
+  $('#ratio-seg').onclick = e => { const b = e.target.closest('button'); if (!b || isBusy()) return; settings.capture.ratio = b.dataset.r; saveSettings(); applyLayout(); };
+  $('#btn-orient').onclick = () => { if (isBusy()) return; settings.capture.orient = settings.capture.orient === 'portrait' ? 'landscape' : 'portrait'; saveSettings(); applyLayout(); };
+  $$('.cap-tools [data-panel]').forEach(btn => btn.onclick = () => {
+    const p = $('#' + btn.dataset.panel), open = !p.classList.contains('open');
+    $$('#page-capture .panel').forEach(x => x.classList.remove('open'));
+    $$('.cap-tools [data-panel]').forEach(x => x.classList.remove('on'));
+    if (open) { p.classList.add('open'); btn.classList.add('on'); }
+    requestAnimationFrame(fit);
+  });
+  $$('#panel-beauty [data-b]').forEach(i => i.oninput = () => { live.beauty[i.dataset.b] = +i.value; i.nextElementSibling.textContent = i.value; });
+  $('#beauty-reset').onclick = () => { live.beauty = { slim: 0, eyes: 0, smooth: 0, tone: 0 }; syncUI(); };
+  $('#beauty-save').onclick = () => { settings.beauty = { ...live.beauty }; saveSettings(); toast('美顏設定已儲存'); };
+  $('#bright-range').oninput = e => { settings.brightness = +e.target.value; $('#bright-out').textContent = e.target.value; };
+  $('#bright-range').onchange = () => saveSettings();
+  $('#stamp-show').onchange = e => { settings.stamp.show = e.target.checked; saveSettings(); updateLiveStamp(); };
+  $('#stamp-format').onchange = e => { settings.stamp.format = e.target.value; saveSettings(); updateLiveStamp(); };
+  $('#stamp-pos-seg').onclick = e => { const b = e.target.closest('button'); if (!b) return; settings.stamp.pos = b.dataset.v; saveSettings(); syncUI(); };
+  $('#live-stamp').onclick = () => { const i = POS.findIndex(p => p.v === settings.stamp.pos); settings.stamp.pos = POS[(i + 1) % 4].v; saveSettings(); syncUI(); };
+  $('#cam-retry').onclick = () => openStream();
+  $('#cam-upload').onclick = () => uploadFlow();
+  let pinch = null;
+  const dist = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+  frame.addEventListener('touchstart', e => { if (e.touches.length === 2) pinch = { d: dist(e.touches), z: st.zoom }; }, { passive: true });
+  frame.addEventListener('touchmove', e => { if (pinch && e.touches.length === 2) { e.preventDefault(); setZoom(pinch.z * dist(e.touches) / pinch.d); } }, { passive: false });
+  frame.addEventListener('touchend', () => { pinch = null; });
+  frame.addEventListener('wheel', e => { e.preventDefault(); setZoom(st.zoom - e.deltaY * 0.002); }, { passive: false });
+
+  return { start, stop, isBusy, applyLayout, syncUI, setDefaultDur, live };
+})();
+
+/* 把一張張縮時畫面編成影片 */
+async function encodeFrames(frames, W, H, fps) {
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const x = c.getContext('2d');
+  const first = await createImageBitmap(frames[0]); x.drawImage(first, 0, 0, W, H);
+  const cs = c.captureStream(30);
+  const mime = pickMime(false);
+  const rec = new MediaRecorder(cs, mime ? { mimeType: mime, videoBitsPerSecond: 5e6 } : undefined);
+  const chunks = [];
+  rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+  const done = new Promise(r => rec.onstop = r);
+  rec.start(250);
+  for (const f of frames) {
+    const bmp = await createImageBitmap(f);
+    x.drawImage(bmp, 0, 0, W, H); if (bmp.close) bmp.close();
+    await sleep(1000 / fps);
+  }
+  await sleep(150);
+  rec.stop(); await done;
+  cs.getTracks().forEach(t => t.stop());
+  const duration = frames.length / fps + 0.15;
+  return { blob: await fixWebmDuration(new Blob(chunks, { type: baseMime(rec.mimeType || mime) || 'video/webm' }), duration), duration };
+}
+
+/* =========================================================
+   新增／編輯紀錄
+   ========================================================= */
+function newRecordFrom(item) {
+  const d = item.ts || new Date();
+  return {
+    id: uid(), type: item.type, date: fmtDate(d), time: fmtTime(d), mood: '',
+    stamp: { show: settings.stamp.show, pos: settings.stamp.pos, text: '' },
+    inVlog: true, duration: item.duration || 0, w: item.w || 0, h: item.h || 0,
+    mime: item.blob.type, size: item.blob.size, thumb: item.thumb, source: item.source || 'upload',
+    timelapse: !!item.timelapse, createdAt: Date.now(), updatedAt: Date.now()
+  };
+}
+async function saveNewRecord(r, blob) {
+  await IDB.put('media', r.id, blob);
+  records.push(r); saveRecords();
+}
+function recordFormHTML(r, mediaHTML) {
+  return `
+  <div class="media-box"><div class="media-in">${mediaHTML}<div class="stamp-ov"></div></div></div>
+  <div class="form">
+    <label class="f"><span class="f-label">心情小語</span><textarea class="input" name="mood" rows="2" maxlength="120" placeholder="寫下此刻的心情點滴…">${esc(r.mood)}</textarea></label>
+    <div class="two">
+      <label class="f"><span class="f-label">日期</span><input class="input" type="date" name="date" value="${r.date}" required></label>
+      <label class="f"><span class="f-label">時間</span><input class="input" type="time" step="1" name="time" value="${r.time}" required></label>
+    </div>
+    <div class="stamp-box">
+      <div class="row between wrap gap">
+        <span class="f-label" style="margin:0">畫面上的時間戳記</span>
+        <div class="row gap"><span class="muted" style="font-size:12.5px">顯示</span><label class="switch sm"><input type="checkbox" name="stampShow" ${r.stamp.show ? 'checked' : ''}><span></span></label></div>
+      </div>
+      <div class="seg sm" data-name="stampPos" style="justify-self:start">${POS.map(p => `<button type="button" data-v="${p.v}" class="${r.stamp.pos === p.v ? 'on' : ''}">${p.l}</button>`).join('')}</div>
+      <input class="input" name="stampText" maxlength="40" placeholder="自訂文字（留空會自動顯示日期與時間）" value="${esc(r.stamp.text)}">
+    </div>
+  </div>`;
+}
+function bindRecordForm(root, r) {
+  const ov = $('.media-in .stamp-ov', root);
+  const read = () => {
+    r.mood = $('[name=mood]', root).value.trim();
+    r.date = $('[name=date]', root).value || r.date;
+    let t = $('[name=time]', root).value || r.time;
+    if (t.length === 5) t += ':00';
+    r.time = t;
+    r.stamp.show = $('[name=stampShow]', root).checked;
+    r.stamp.text = $('[name=stampText]', root).value.trim();
+  };
+  const upd = () => { read(); ov.className = 'stamp-ov ' + r.stamp.pos; ov.hidden = !r.stamp.show; ov.textContent = stampText(r); };
+  root.addEventListener('input', upd); root.addEventListener('change', upd);
+  $$('[data-name=stampPos] button', root).forEach(b => b.onclick = () => {
+    r.stamp.pos = b.dataset.v;
+    $$('[data-name=stampPos] button', root).forEach(x => x.classList.toggle('on', x === b)); upd();
+  });
+  upd();
+  return read;
+}
+function mediaTag(type, url, extra = '') {
+  return type === 'photo' ? `<img src="${url}" alt="">` : `<video src="${url}" playsinline controls ${extra}></video>`;
+}
+function openCapturePreview(item) {
+  const url = URL.createObjectURL(item.blob);
+  const r = newRecordFrom(item);
+  const cam = item.source === 'camera';
+  const m = openModal(`
+    <div class="sheet-head"><div><h2>${cam ? '預覽拍攝畫面' : '確認上傳'}</h2><p class="sub">確認沒問題再上傳到日誌</p></div><button class="x" data-close>×</button></div>
+    ${recordFormHTML(r, mediaTag(item.type, url, 'autoplay loop muted'))}
+    <div class="row end actions"><button class="btn ghost" data-act="retake">${cam ? '重拍' : '取消'}</button><button class="btn primary" data-act="save">上傳到日誌</button></div>`);
+  const read = bindRecordForm(m, r);
+  $('[data-act=retake]', m).onclick = () => m.close();
+  $('[data-act=save]', m).onclick = async () => {
+    read();
+    try { await saveNewRecord(r, item.blob); } catch (e) { console.error(e); toast('儲存失敗：瀏覽器空間可能不足'); return; }
+    m.close(); toast('已上傳到日誌 ✓'); refreshViews();
+  };
+  m.addEventListener('close', () => setTimeout(() => URL.revokeObjectURL(url), 400));
+}
+async function openEditor(id) {
+  const r0 = getRec(id); if (!r0) return;
+  const r = JSON.parse(JSON.stringify(r0));
+  r.stamp = r.stamp || { show: true, pos: 'br', text: '' };
+  let blob = null; try { blob = await IDB.get('media', id); } catch (e) { }
+  const url = blob ? URL.createObjectURL(blob) : null;
+  const media = blob ? mediaTag(r.type, url) : `<div class="missing">找不到這筆的影像檔</div>`;
+  const info = [r.type === 'photo' ? '照片' : (r.timelapse ? '縮時影片' : '影片') + ' ' + fmtDur(r.duration), r.source === 'camera' ? '相機拍攝' : '上傳', r.size ? fmtSize(r.size) : ''].filter(Boolean).join(' · ');
+  const m = openModal(`
+    <div class="sheet-head"><div><h2>編輯紀錄</h2><p class="info-line">${info}</p></div><button class="x" data-close>×</button></div>
+    ${recordFormHTML(r, media)}
+    <div class="row between" style="margin-top:12px;font-size:14px;color:var(--medium)">放進當天的 VLOG<label class="switch"><input type="checkbox" name="inVlog" ${r.inVlog !== false ? 'checked' : ''}><span></span></label></div>
+    <div class="row between actions">
+      <button class="btn danger" data-act="del">刪除</button>
+      <div class="row gap"><button class="btn ghost" data-close>取消</button><button class="btn primary" data-act="save">儲存</button></div>
+    </div>`);
+  const read = bindRecordForm(m, r);
+  $('[data-act=save]', m).onclick = () => {
+    read(); r.inVlog = $('[name=inVlog]', m).checked; r.updatedAt = Date.now();
+    Object.assign(r0, r); saveRecords(); m.close(); toast('已儲存'); refreshViews();
+  };
+  $('[data-act=del]', m).onclick = async () => {
+    if (!await confirmBox('確定要刪除這筆紀錄嗎？刪除後無法復原。', '刪除', true)) return;
+    await deleteRecord(id); m.close(); toast('已刪除'); refreshViews();
+  };
+  m.addEventListener('close', () => { if (url) setTimeout(() => URL.revokeObjectURL(url), 400); });
+}
+async function deleteRecord(id) {
+  try { await IDB.del('media', id); } catch (e) { }
+  records = records.filter(r => r.id !== id); saveRecords();
+  for (const d in orders) orders[d] = orders[d].filter(x => x !== id);
+  saveOrders();
+}
+
+/* ---------- 上傳 ---------- */
+async function processFile(file) {
+  const isVideo = (file.type || '').startsWith('video/') || /\.(mp4|mov|webm|m4v|3gp)$/i.test(file.name);
+  const url = URL.createObjectURL(file);
+  try {
+    if (isVideo) {
+      const v = await loadVideo(url);
+      const dur = await probeDuration(v);
+      v.currentTime = Math.min(0.3, (dur || 1) / 3); await once(v, 'seeked', 2000);
+      return { type: 'video', blob: file, thumb: makeThumb(v, v.videoWidth, v.videoHeight), duration: dur, ts: new Date(file.lastModified || Date.now()), w: v.videoWidth, h: v.videoHeight, source: 'upload' };
+    }
+    const ts = await exifDate(file) || new Date(file.lastModified || Date.now());
+    const img = await loadImg(url);
+    const s = Math.min(1, 2048 / Math.max(img.naturalWidth, img.naturalHeight));
+    const w = Math.round(img.naturalWidth * s), h = Math.round(img.naturalHeight * s);
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    c.getContext('2d').drawImage(img, 0, 0, w, h);
+    const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.9));
+    return { type: 'photo', blob, thumb: makeThumb(c, w, h), ts, w, h, source: 'upload' };
+  } finally { URL.revokeObjectURL(url); }
+}
+async function processFiles(files) {
+  const items = [];
+  showBusy(`正在讀取 ${files.length} 個檔案…`);
+  for (const f of files) {
+    try { items.push(await processFile(f)); } catch (e) { console.warn(e); toast(`無法讀取：${f.name}`); await sleep(600); }
+  }
+  hideBusy();
+  return items;
+}
+async function uploadFlow() {
+  const files = await pickFiles(true);
+  if (!files.length) return;
+  const items = await processFiles(files);
+  if (!items.length) return;
+  if (items.length === 1) return openCapturePreview(items[0]);
+  for (const it of items) { await saveNewRecord(newRecordFrom(it), it.blob); }
+  toast(`已新增 ${items.length} 筆，依拍攝時間排入日誌`);
+  refreshViews();
+}
+
+/* =========================================================
+   日誌
+   ========================================================= */
+const J = { type: 'all' };
+function renderJournal() {
+  const q = $('#j-q').value.trim().toLowerCase();
+  const date = $('#j-date').value, sort = $('#j-sort').value;
+  $('#j-clear').hidden = !(q || date || J.type !== 'all');
+  const list = records.filter(r => {
+    if (J.type !== 'all' && r.type !== J.type) return false;
+    if (date && r.date !== date) return false;
+    if (q) {
+      const hay = [r.mood, r.date, dotDate(r.date), r.time, r.stamp && r.stamp.text, '週' + weekday(r.date)].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  }).sort(byTime);
+  if (sort === 'desc') list.reverse();
+  const days = [...new Set(records.map(r => r.date))];
+  $('#j-sub').textContent = records.length ? `共 ${records.length} 支影像 · ${days.length} 天` : '還沒有任何紀錄';
+  const box = $('#j-list');
+  if (!list.length) {
+    box.innerHTML = `<div class="empty">${hourglass()}<div>${records.length ? '找不到符合條件的紀錄' : '還沒有紀錄<br>到「拍攝」拍下今天的第一個片刻，或按「新增影像」上傳照片與影片'}</div></div>`;
+    return;
+  }
+  const groups = new Map();
+  list.forEach(r => { if (!groups.has(r.date)) groups.set(r.date, []); groups.get(r.date).push(r); });
+  box.innerHTML = [...groups].map(([d, rs]) => {
+    const total = records.filter(r => r.date === d).length;
+    return `<div class="day">
+      <div class="day-head">
+        <div><b class="d">${dotDate(d)}</b><span class="wk">週${weekday(d)}</span><span class="cnt">${rs.length}${rs.length !== total ? ' / ' + total : ''} 支影像</span></div>
+        <div class="row gap">${vlogIndex[d] ? `<button class="btn blue sm" data-watch="${d}">▶ 觀看 VLOG</button>` : ''}<button class="btn soft sm" data-vlog="${d}">${vlogIndex[d] ? '重新製作' : '製作 VLOG'}</button></div>
+      </div>
+      <div class="grid">${rs.map(clipCard).join('')}</div>
+    </div>`;
+  }).join('');
+}
+function clipCard(r) {
+  const off = r.inVlog === false;
+  return `<button class="clip ${off ? 'off' : ''}" data-id="${r.id}">
+    <div class="th" style="background-image:url(${r.thumb || ''})">
+      ${r.type === 'video' ? `<span class="badge"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4l13 8-13 8z"/></svg>${r.timelapse ? '縮時 ' : ''}${fmtDur(r.duration)}</span>` : ''}
+      ${off ? '<span class="badge off">不放入 VLOG</span>' : ''}
+    </div>
+    <div class="meta"><div class="time">${(r.time || '').slice(0, 5)}</div><div class="mood">${esc(r.mood) || '<span class="muted">—</span>'}</div></div>
+  </button>`;
+}
+function hourglass() {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12M6 21h12M7 3c0 5 5 6 5 9s-5 4-5 9M17 3c0 5-5 6-5 9s5 4 5 9"/><path d="M9.5 18.5c1-1.2 4-1.2 5 0" fill="currentColor"/></svg>`;
+}
+$('#j-q').oninput = renderJournal;
+$('#j-date').onchange = renderJournal;
+$('#j-sort').onchange = renderJournal;
+$('#j-type').onclick = e => { const b = e.target.closest('button'); if (!b) return; J.type = b.dataset.v; $$('#j-type button').forEach(x => x.classList.toggle('on', x === b)); renderJournal(); };
+$('#j-clear').onclick = () => { $('#j-q').value = ''; $('#j-date').value = ''; J.type = 'all'; $$('#j-type button').forEach(x => x.classList.toggle('on', x.dataset.v === 'all')); renderJournal(); };
+$('#j-add').onclick = () => uploadFlow();
+$('#j-list').onclick = e => {
+  const c = e.target.closest('[data-id]'); if (c) return openEditor(c.dataset.id);
+  const v = e.target.closest('[data-vlog]'); if (v) return openVlogEditor(v.dataset.vlog);
+  const w = e.target.closest('[data-watch]'); if (w) return watchVlog(w.dataset.watch);
+};
+
+/* =========================================================
+   VLOG：自動剪輯
+   ========================================================= */
+const OUT = { '9:16': [720, 1280], '16:9': [1280, 720], '1:1': [1080, 1080], '4:3': [1024, 768], '3:4': [768, 1024] };
+function getOrder(date) {
+  const ids = records.filter(r => r.date === date).sort(byTime).map(r => r.id);
+  const saved = (orders[date] || []).filter(id => ids.includes(id));
+  const result = saved.slice();
+  ids.filter(id => !saved.includes(id)).forEach(id => {
+    const r = getRec(id);
+    const i = result.findIndex(x => getRec(x).time > r.time);
+    if (i < 0) result.push(id); else result.splice(i, 0, id);
+  });
+  return result;
+}
+function clipSeconds(r, opt) {
+  return r.type === 'photo' ? +opt.photoSec : Math.max(0.5, Math.min(r.duration || 3, +opt.maxClipSec));
+}
+function openVlogEditor(date) {
+  let order = getOrder(date);
+  const opt = { ...settings.vlog, title: '' };
+  const m = openModal(`
+    <div class="sheet-head"><div><h2>製作 VLOG</h2><p class="sub">${dotDate(date)} 週${weekday(date)} · 依拍攝時間自動排列，也可以手動調整</p></div><button class="x" data-close>×</button></div>
+    <div class="vbody"></div>`, { cls: 'wide' });
+  const body = $('.vbody', m);
+  let cancelled = false, insertAt = 0;
+  m.addEventListener('close', () => { cancelled = true; });
+
+  const sel = (o, list) => `<select class="input" data-o="${o}">${list.map(([v, l]) => `<option value="${v}" ${String(opt[o]) === String(v) ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
+  function editView() {
+    body.innerHTML = `
+      <div class="vopts">
+        <label class="f"><span class="f-label">影片比例</span>${sel('ratio', [['9:16', '9:16 直式'], ['16:9', '16:9 橫式'], ['1:1', '1:1 方形'], ['4:3', '4:3'], ['3:4', '3:4']])}</label>
+        <label class="f"><span class="f-label">照片停留</span>${sel('photoSec', [[2, '2 秒'], [3, '3 秒'], [4, '4 秒'], [5, '5 秒']])}</label>
+        <label class="f"><span class="f-label">影片片段上限</span>${sel('maxClipSec', [[5, '5 秒'], [10, '10 秒'], [15, '15 秒'], [30, '30 秒'], [60, '60 秒']])}</label>
+        <label class="f"><span class="f-label">畫面填滿</span>${sel('fit', [['blur', '完整＋柔焦底'], ['cover', '裁切填滿']])}</label>
+        <label class="f full"><span class="f-label">片頭標題（選填）</span><input class="input" data-o="title" maxlength="30" placeholder="例如：首爾散步的一天" value="${esc(opt.title)}"></label>
+        <div class="checks full">
+          <label><span class="switch sm"><input type="checkbox" data-o="showMood" ${opt.showMood ? 'checked' : ''}><span></span></span>顯示心情小語</label>
+          <label><span class="switch sm"><input type="checkbox" data-o="intro" ${opt.intro ? 'checked' : ''}><span></span></span>片頭／片尾</label>
+          <label><span class="switch sm"><input type="checkbox" data-o="keepAudio" ${opt.keepAudio ? 'checked' : ''}><span></span></span>保留影片原音</label>
+        </div>
+      </div>
+      <div class="vlist-head"><b>片段順序</b>
+        <div class="row gap wrap"><button class="btn ghost sm" data-act="resort">依拍攝時間排序</button><button class="btn soft sm" data-ins="0">＋ 在開頭插入影像</button></div>
+      </div>
+      <div class="vlist"></div>
+      <div class="vfoot"><span class="est"></span><button class="btn primary" data-act="go">開始生成 VLOG</button></div>`;
+    $$('[data-o]', body).forEach(el => el.onchange = el.oninput = () => {
+      const k = el.dataset.o;
+      opt[k] = el.type === 'checkbox' ? el.checked : (['photoSec', 'maxClipSec'].includes(k) ? +el.value : el.value);
+      if (k !== 'title') { settings.vlog[k] = opt[k]; saveSettings(); }
+      updEst();
+    });
+    renderList();
+  }
+  function updEst() {
+    const ids = order.filter(id => getRec(id) && getRec(id).inVlog !== false);
+    const secs = ids.reduce((s, id) => s + clipSeconds(getRec(id), opt), 0) + (opt.intro ? 4.7 : 0);
+    const est = $('.est', body);
+    if (est) est.textContent = `${ids.length} 個片段 · 約 ${fmtDur(secs)}`;
+    const go = $('[data-act=go]', body); if (go) go.disabled = !ids.length;
+  }
+  function renderList() {
+    const list = $('.vlist', body);
+    list.innerHTML = order.map((id, i) => {
+      const r = getRec(id); if (!r) return '';
+      return `<div class="vrow ${r.inVlog === false ? 'off' : ''}">
+        <span class="n">${i + 1}</span>
+        <div class="vth" style="background-image:url(${r.thumb || ''})">${r.type === 'video' ? `<i>▶ ${fmtDur(r.duration)}</i>` : ''}</div>
+        <div class="vinfo"><div class="t">${r.time.slice(0, 5)} · ${r.type === 'video' ? '影片' : '照片'} · ${clipSeconds(r, opt).toFixed(1).replace('.0', '')} 秒</div><div class="m">${esc(r.mood) || '<span class="muted">（沒有心情小語）</span>'}</div></div>
+        <div class="vact">
+          <label class="switch sm" title="放入 VLOG"><input type="checkbox" data-inc="${id}" ${r.inVlog !== false ? 'checked' : ''}><span></span></label>
+          <button class="mini" data-up="${i}" ${i === 0 ? 'disabled' : ''} title="往前">↑</button>
+          <button class="mini" data-down="${i}" ${i === order.length - 1 ? 'disabled' : ''} title="往後">↓</button>
+          <button class="mini" data-ins="${i + 1}" title="在這段後面插入影像">＋</button>
+        </div></div>`;
+    }).join('') || `<div class="empty">這天還沒有影像，按「在開頭插入影像」加入照片或影片</div>`;
+    updEst();
+  }
+  async function insertFiles(at) {
+    const files = await pickFiles(true);
+    if (!files.length) return;
+    const items = await processFiles(files);
+    const prev = getRec(order[at - 1]) || getRec(order[at]);
+    const newIds = [];
+    for (const it of items) {
+      const r = newRecordFrom(it);
+      r.date = date; r.time = prev ? prev.time : '12:00:00'; r.source = 'upload';
+      await saveNewRecord(r, it.blob); newIds.push(r.id);
+    }
+    order.splice(at, 0, ...newIds);
+    orders[date] = order.slice(); saveOrders();
+    renderList(); refreshViews();
+    if (newIds.length) toast(`已插入 ${newIds.length} 個影像`);
+  }
+  body.addEventListener('click', e => {
+    const t = e.target.closest('button'); if (!t) return;
+    if (t.dataset.up !== undefined) { const i = +t.dataset.up; [order[i - 1], order[i]] = [order[i], order[i - 1]]; orders[date] = order.slice(); saveOrders(); renderList(); }
+    else if (t.dataset.down !== undefined) { const i = +t.dataset.down; [order[i + 1], order[i]] = [order[i], order[i + 1]]; orders[date] = order.slice(); saveOrders(); renderList(); }
+    else if (t.dataset.ins !== undefined) insertFiles(+t.dataset.ins);
+    else if (t.dataset.act === 'resort') { delete orders[date]; saveOrders(); order = getOrder(date); renderList(); toast('已依拍攝時間重新排序'); }
+    else if (t.dataset.act === 'go') generate();
+    else if (t.dataset.act === 'cancel') { cancelled = true; }
+    else if (t.dataset.act === 'edit') { cancelled = false; editView(); }
+  });
+  body.addEventListener('change', e => {
+    const inc = e.target.dataset && e.target.dataset.inc;
+    if (inc) { const r = getRec(inc); r.inVlog = e.target.checked; saveRecords(); renderList(); refreshViews(); }
+  });
+
+  async function generate() {
+    const ids = order.filter(id => getRec(id) && getRec(id).inVlog !== false);
+    if (!ids.length) return toast('沒有可用的片段');
+    if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) return toast('這個瀏覽器不支援生成影片，建議使用 Chrome 或最新版 Safari');
+    cancelled = false;
+    body.innerHTML = `<div class="render">
+      <canvas></canvas>
+      <div class="prog"><div class="bar"><i></i></div><span class="pct">0%</span></div>
+      <p class="sub">影片會依實際長度即時錄製，請保持這個畫面開啟。</p>
+      <button class="btn ghost" data-act="cancel">取消</button></div>`;
+    m.dataset.lock = 1;
+    const bar = $('.bar i', body), pct = $('.pct', body);
+    let res = null;
+    try {
+      res = await renderVlog({ date, ids, opt, canvas: $('canvas', body), isCancelled: () => cancelled, onProgress: p => { bar.style.width = (p * 100).toFixed(1) + '%'; pct.textContent = Math.floor(p * 100) + '%'; } });
+    } catch (e) { console.error(e); toast('生成失敗：' + e.message); }
+    delete m.dataset.lock;
+    if (!m.isConnected) return;
+    if (!res) { editView(); return; }
+    const meta = { createdAt: Date.now(), duration: res.duration, mime: res.blob.type, size: res.blob.size };
+    try { await IDB.put('vlogs', date, { blob: res.blob, ...meta }); vlogIndex[date] = meta; saveVlogIndex(); } catch (e) { toast('VLOG 已生成，但儲存空間不足，請直接下載'); }
+    refreshViews();
+    resultView(res.blob);
+  }
+  function resultView(blob) {
+    const url = URL.createObjectURL(blob);
+    m.addEventListener('close', () => URL.revokeObjectURL(url));
+    body.innerHTML = `<div class="render">
+      <video src="${url}" controls playsinline autoplay></video>
+      <p class="sub">完成！已存到日誌，也可以下載到裝置。</p>
+      <div class="row gap wrap center">
+        <button class="btn ghost" data-act="edit">重新編輯</button>
+        ${canShare(blob) ? '<button class="btn blue" data-act="share">分享</button>' : ''}
+        <button class="btn primary" data-act="dl">下載影片</button>
+      </div></div>`;
+    $('[data-act=dl]', body).onclick = () => downloadBlob(blob, `salog-${date}.${extOf(blob.type)}`);
+    const sh = $('[data-act=share]', body); if (sh) sh.onclick = () => shareBlob(blob, date);
+  }
+  editView();
+}
+function canShare(blob) {
+  try { return !!(navigator.canShare && navigator.canShare({ files: [new File([blob], 'v.' + extOf(blob.type), { type: blob.type })] })); } catch (e) { return false; }
+}
+async function shareBlob(blob, date) {
+  try { await navigator.share({ files: [new File([blob], `salog-${date}.${extOf(blob.type)}`, { type: blob.type })], title: `Salog ${dotDate(date)}` }); } catch (e) { }
+}
+async function watchVlog(date) {
+  let v = null; try { v = await IDB.get('vlogs', date); } catch (e) { }
+  if (!v) { delete vlogIndex[date]; saveVlogIndex(); refreshViews(); return toast('找不到這天的 VLOG，請重新製作'); }
+  const url = URL.createObjectURL(v.blob);
+  const m = openModal(`
+    <div class="sheet-head"><div><h2>${dotDate(date)} VLOG</h2><p class="sub">${fmtDur(v.duration)} · ${fmtSize(v.blob.size)}</p></div><button class="x" data-close>×</button></div>
+    <div class="render"><video src="${url}" controls playsinline autoplay></video>
+    <div class="row gap wrap center">
+      <button class="btn danger" data-act="del">刪除</button>
+      <button class="btn ghost" data-act="remake">重新製作</button>
+      ${canShare(v.blob) ? '<button class="btn blue" data-act="share">分享</button>' : ''}
+      <button class="btn primary" data-act="dl">下載影片</button>
+    </div></div>`, { cls: 'wide' });
+  m.addEventListener('close', () => URL.revokeObjectURL(url));
+  $('[data-act=dl]', m).onclick = () => downloadBlob(v.blob, `salog-${date}.${extOf(v.blob.type)}`);
+  const sh = $('[data-act=share]', m); if (sh) sh.onclick = () => shareBlob(v.blob, date);
+  $('[data-act=remake]', m).onclick = () => { m.close(); openVlogEditor(date); };
+  $('[data-act=del]', m).onclick = async () => {
+    if (!await confirmBox('刪除這支 VLOG？（原本的照片與影片不會被刪除）', '刪除', true)) return;
+    await IDB.del('vlogs', date); delete vlogIndex[date]; saveVlogIndex(); m.close(); refreshViews(); toast('已刪除 VLOG');
+  };
+}
+
+/* ---- 繪製工具 ---- */
+const blurCanvas = document.createElement('canvas');
+function drawFit(ctx, src, sw, sh, W, H, fit, zoom = 1) {
+  if (fit === 'cover') {
+    const s = Math.max(W / sw, H / sh) * zoom, w = sw * s, h = sh * s;
+    ctx.drawImage(src, (W - w) / 2, (H - h) / 2, w, h); return;
+  }
+  // 柔焦背景
+  blurCanvas.width = Math.max(1, Math.round(W / 24)); blurCanvas.height = Math.max(1, Math.round(H / 24));
+  const b = blurCanvas.getContext('2d'), bs = Math.max(blurCanvas.width / sw, blurCanvas.height / sh);
+  b.drawImage(src, (blurCanvas.width - sw * bs) / 2, (blurCanvas.height - sh * bs) / 2, sw * bs, sh * bs);
+  ctx.save(); ctx.imageSmoothingQuality = 'high'; ctx.drawImage(blurCanvas, 0, 0, W, H);
+  ctx.fillStyle = 'rgba(250,243,238,.28)'; ctx.fillRect(0, 0, W, H); ctx.restore();
+  const s = Math.min(W / sw, H / sh) * zoom, w = sw * s, h = sh * s;
+  ctx.drawImage(src, (W - w) / 2, (H - h) / 2, w, h);
+}
+function wrapText(ctx, text, maxW, maxLines = 3) {
+  const lines = []; let line = '';
+  for (const ch of text) {
+    if (ch === '\n') { lines.push(line); line = ''; continue; }
+    const t = line + ch;
+    if (ctx.measureText(t).width > maxW && line) { lines.push(line); line = ch; } else line = t;
+  }
+  if (line) lines.push(line);
+  if (lines.length > maxLines) { lines.length = maxLines; lines[maxLines - 1] = lines[maxLines - 1].slice(0, -1) + '…'; }
+  return lines;
+}
+function drawMood(ctx, text, W, H, alpha) {
+  const s = Math.min(W, H), fs = Math.round(s * 0.046), lh = fs * 1.5;
+  ctx.save(); ctx.globalAlpha = alpha;
+  ctx.font = `500 ${fs}px "Noto Sans TC", sans-serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const lines = wrapText(ctx, text, W * 0.72);
+  const bottom = H - Math.max(H * 0.1, s * 0.16);
+  ctx.shadowColor = 'rgba(0,0,0,.45)'; ctx.shadowBlur = fs * 0.5;
+  ctx.fillStyle = '#FFFFFF';
+  lines.forEach((l, i) => ctx.fillText(l, W / 2, bottom - (lines.length - 1 - i) * lh));
+  ctx.restore();
+}
+function drawCard(ctx, W, H, t, dur, lines) {
+  const s = Math.min(W, H);
+  ctx.fillStyle = '#FAF3EE'; ctx.fillRect(0, 0, W, H);
+  ctx.save(); ctx.globalAlpha = 0.55;
+  ctx.fillStyle = '#F5E6E3'; ctx.beginPath(); ctx.arc(W * 0.86, H * 0.16, s * 0.32, 0, 7); ctx.fill();
+  ctx.fillStyle = '#E3EDF3'; ctx.beginPath(); ctx.arc(W * 0.1, H * 0.88, s * 0.28, 0, 7); ctx.fill();
+  ctx.fillStyle = '#E8F0E8'; ctx.beginPath(); ctx.arc(W * 0.92, H * 0.92, s * 0.12, 0, 7); ctx.fill();
+  ctx.restore();
+  const a = Math.min(1, t / 0.6) * Math.min(1, Math.max(0, (dur - t) / 0.4));
+  ctx.save(); ctx.globalAlpha = a; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const lift = (1 - Math.min(1, t / 0.6)) * s * 0.02;
+  lines.forEach(l => {
+    ctx.font = `${l.w || 500} ${Math.round(s * l.size)}px "Noto Sans TC", sans-serif`;
+    ctx.fillStyle = l.color || '#37352F';
+    if ('letterSpacing' in ctx) ctx.letterSpacing = (l.ls || 0) + 'px';
+    ctx.fillText(l.text, W / 2, H / 2 + s * l.y + lift);
+  });
+  ctx.restore();
+}
+function drawSeg(ctx, sg, t, W, H, opt, date, count) {
+  if (sg.kind === 'intro') {
+    return drawCard(ctx, W, H, t, sg.dur, [
+      { text: 'SALOG  ·  DAILY VLOG', size: 0.03, y: -0.17, color: '#C9938A', w: 700, ls: 4 },
+      { text: dotDate(date), size: 0.1, y: -0.05, w: 700 },
+      { text: `週${weekday(date)}`, size: 0.038, y: 0.05, color: '#5A5248' },
+      ...(opt.title ? [{ text: opt.title, size: 0.046, y: 0.15, color: '#7A9BAD', w: 500 }] : [])
+    ]);
+  }
+  if (sg.kind === 'outro') {
+    return drawCard(ctx, W, H, t, sg.dur, [
+      { text: '今天也好好地記錄下來了', size: 0.05, y: -0.04, w: 700 },
+      { text: `${count} 個片刻  ·  ${dotDate(date)}`, size: 0.032, y: 0.05, color: '#9B9A97' },
+      { text: '沙漏 Salog', size: 0.03, y: 0.14, color: '#C9938A', w: 700, ls: 2 }
+    ]);
+  }
+  const r = sg.r;
+  ctx.fillStyle = '#FAF3EE'; ctx.fillRect(0, 0, W, H);
+  if (sg.kind === 'photo') drawFit(ctx, sg.img, sg.img.naturalWidth, sg.img.naturalHeight, W, H, opt.fit, 1 + 0.06 * Math.min(1, t / sg.dur));
+  else if (sg.v.videoWidth) drawFit(ctx, sg.v, sg.v.videoWidth, sg.v.videoHeight, W, H, opt.fit, 1);
+  if (r.stamp && r.stamp.show) drawStamp(ctx, stampText(r), r.stamp.pos || 'br', W, H);
+  if (opt.showMood && r.mood) drawMood(ctx, r.mood, W, H, Math.min(1, Math.max(0, (t - 0.3) / 0.5)) * Math.min(1, Math.max(0, (sg.dur - t) / 0.3)));
+  const fin = 1 - Math.min(1, t / 0.35), fout = 1 - Math.min(1, (sg.dur - t) / 0.3);
+  const f = Math.max(fin, fout);
+  if (f > 0) { ctx.fillStyle = `rgba(250,243,238,${f})`; ctx.fillRect(0, 0, W, H); }
+}
+
+async function renderVlog({ date, ids, opt, canvas, onProgress, isCancelled }) {
+  try { await Promise.race([document.fonts.load('700 40px "Noto Sans TC"'), sleep(2500)]); } catch (e) { }
+  const [W, H] = OUT[opt.ratio] || OUT['9:16'];
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  const urls = [], segs = [];
+  if (opt.intro) segs.push({ kind: 'intro', dur: 2.5 });
+  for (const id of ids) {
+    const r = getRec(id);
+    const blob = await IDB.get('media', id).catch(() => null);
+    if (!blob) continue;
+    const url = URL.createObjectURL(blob); urls.push(url);
+    try {
+      if (r.type === 'photo') segs.push({ kind: 'photo', r, img: await loadImg(url), dur: +opt.photoSec });
+      else {
+        const v = await loadVideo(url);
+        let d = r.duration || await probeDuration(v);
+        segs.push({ kind: 'video', r, v, dur: Math.max(0.5, Math.min(d || 3, +opt.maxClipSec)) });
+      }
+    } catch (e) { console.warn('skip', id, e); }
+    if (isCancelled()) break;
+  }
+  const count = segs.filter(s => s.r).length;
+  if (opt.intro) segs.push({ kind: 'outro', dur: 2.2 });
+  const cleanup = () => urls.forEach(u => URL.revokeObjectURL(u));
+  if (isCancelled() || !count) { cleanup(); if (!count && !isCancelled()) throw new Error('片段都無法讀取'); return null; }
+  const total = segs.reduce((s, x) => s + x.dur, 0);
+
+  // 聲音：把影片原音接進錄影
+  let ac = null, dest = null;
+  const vids = segs.filter(s => s.kind === 'video');
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (opt.keepAudio && vids.length && AC) {
+    try {
+      ac = new AC(); dest = ac.createMediaStreamDestination();
+      vids.forEach(s => { ac.createMediaElementSource(s.v).connect(dest); s.v.muted = false; });
+      await ac.resume();
+    } catch (e) { console.warn(e); ac = null; dest = null; vids.forEach(s => s.v.muted = true); }
+  }
+  const vs = canvas.captureStream(30);
+  const tracks = [...vs.getVideoTracks(), ...(dest ? dest.stream.getAudioTracks() : [])];
+  const mime = pickMime(!!dest);
+  const rec = new MediaRecorder(new MediaStream(tracks), mime ? { mimeType: mime, videoBitsPerSecond: 6e6 } : { videoBitsPerSecond: 6e6 });
+  const chunks = [];
+  rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+  const stopped = new Promise(r => rec.onstop = r);
+  drawSeg(ctx, segs[0], 0, W, H, opt, date, count);
+  rec.start(500);
+  let before = 0;
+  for (const sg of segs) {
+    if (isCancelled()) break;
+    if (sg.kind === 'video') {
+      sg.v.currentTime = 0;
+      try { await sg.v.play(); } catch (e) { sg.v.muted = true; try { await sg.v.play(); } catch (_) { } }
+    }
+    const t0 = performance.now();
+    await new Promise(res => {
+      const step = () => {
+        if (isCancelled()) return res();
+        const t = (performance.now() - t0) / 1000;
+        drawSeg(ctx, sg, Math.min(t, sg.dur), W, H, opt, date, count);
+        onProgress(Math.min(1, (before + Math.min(t, sg.dur)) / total));
+        if (t >= sg.dur || (sg.kind === 'video' && sg.v.ended && t > 0.3)) return res();
+        if (document.hidden) setTimeout(step, 33); else requestAnimationFrame(step);
+      };
+      step();
+    });
+    if (sg.kind === 'video') sg.v.pause();
+    before += sg.dur;
+  }
+  rec.stop(); await stopped;
+  vs.getTracks().forEach(t => t.stop());
+  if (ac) ac.close().catch(() => { });
+  segs.forEach(s => { if (s.v) { s.v.removeAttribute('src'); s.v.load(); } });
+  cleanup();
+  if (isCancelled()) return null;
+  onProgress(1);
+  return { blob: await fixWebmDuration(new Blob(chunks, { type: baseMime(rec.mimeType || mime) || 'video/webm' }), before), duration: before };
+}
+
+/* =========================================================
+   儀表板
+   ========================================================= */
+async function renderDashboard() {
+  const el = $('#dash');
+  const photos = records.filter(r => r.type === 'photo').length;
+  const videos = records.length - photos;
+  const dates = new Set(records.map(r => r.date));
+  const now = new Date(), mk = fmtDate(now).slice(0, 7);
+  const month = records.filter(r => r.date.startsWith(mk)).length;
+  let streak = 0; const d = new Date(now);
+  if (!dates.has(fmtDate(d))) d.setDate(d.getDate() - 1);
+  while (dates.has(fmtDate(d))) { streak++; d.setDate(d.getDate() - 1); }
+  const moods = records.filter(r => r.mood).sort(byTime).reverse();
+  const vlogs = Object.keys(vlogIndex).length;
+  const vlogSecs = Object.values(vlogIndex).reduce((s, v) => s + (v.duration || 0), 0);
+  const td = today(), todays = records.filter(r => r.date === td).sort(byTime);
+  const name = settings.profile.name;
+  const hour = now.getHours();
+  const hi = hour < 11 ? '早安' : hour < 18 ? '午安' : '晚安';
+  const stat = (cls, c, lab, num, unit, cap) => `<div class="stat ${cls}" style="--c:${c}"><div class="lab"><i></i>${lab}</div><div class="num">${num}<small>${unit}</small></div><div class="cap">${cap}</div></div>`;
+  el.innerHTML = `
+    <div class="page-head">
+      <div class="hello"><div class="logo">${hourglass()}</div><div><h1>${hi}${name ? '，' + esc(name) : ''}</h1><p class="sub">${esc(settings.profile.bio) || `${dotDate(td)} 週${weekday(td)} · 今天也來記錄一點點吧`}</p></div></div>
+    </div>
+    <div class="stats">
+      ${stat('pink', 'var(--pink)', '全部影像', records.length, '支', `照片 ${photos} · 影片 ${videos}`)}
+      ${stat('blue', 'var(--blue)', '記錄天數', dates.size, '天', `本月新增 ${month} 支`)}
+      ${stat('sage', 'var(--sage)', '連續記錄', streak, '天', streak ? '繼續保持！' : '今天拍一張開始吧')}
+      ${stat('cream', 'var(--soft-pink)', '已生成 VLOG', vlogs, '支', vlogs ? `合計 ${fmtDur(vlogSecs)}` : '到日誌一鍵生成')}
+      ${stat('', 'var(--pink)', '照片', photos, '張', '')}
+      ${stat('', 'var(--blue)', '影片', videos, '段', `合計 ${fmtDur(records.filter(r => r.type === 'video').reduce((s, r) => s + (r.duration || 0), 0))}`)}
+      ${stat('', 'var(--sage)', '心情小語', moods.length, '則', records.length ? `${Math.round(moods.length / records.length * 100)}% 的影像有留言` : '')}
+      ${stat('', 'var(--gray)', '儲存空間', '<span id="dash-storage">…</span>', '', '存在這台裝置的瀏覽器')}
+    </div>
+    <div class="dash-two">
+      <div class="card">
+        <div class="row between wrap gap"><h3>今天 ${dotDate(td)}</h3><span class="muted" style="font-size:13px">${todays.length} 支影像</span></div>
+        ${todays.length ? `<div class="today-strip">${todays.map(r => `<div style="background-image:url(${r.thumb || ''})"></div>`).join('')}</div>` : '<p class="sub" style="margin:10px 0">今天還沒有紀錄</p>'}
+        <div class="row gap wrap" style="margin-top:10px">
+          <button class="btn ghost sm" data-go="capture">去拍攝</button>
+          ${todays.length ? `<button class="btn primary sm" data-today-vlog>${vlogIndex[td] ? '重新製作今日 VLOG' : '製作今日 VLOG'}</button>` : ''}
+          ${vlogIndex[td] ? `<button class="btn blue sm" data-today-watch>▶ 觀看</button>` : ''}
+        </div>
+      </div>
+      <div class="card">
+        <h3>最近的心情</h3>
+        ${moods.length ? `<ul class="mood-list">${moods.slice(0, 5).map(r => `<li>${esc(r.mood)}<div class="when">${dotDate(r.date)} ${r.time.slice(0, 5)}</div></li>`).join('')}</ul>` : '<p class="sub" style="margin-top:8px">拍攝後留下一句話，會出現在這裡</p>'}
+      </div>
+    </div>`;
+  $$('[data-go]', el).forEach(b => b.onclick = () => go(b.dataset.go));
+  const tv = $('[data-today-vlog]', el); if (tv) tv.onclick = () => openVlogEditor(td);
+  const tw = $('[data-today-watch]', el); if (tw) tw.onclick = () => watchVlog(td);
+  try {
+    const est = navigator.storage && navigator.storage.estimate ? await navigator.storage.estimate() : null;
+    const box = $('#dash-storage');
+    if (box) box.textContent = est ? fmtSize(est.usage || 0) : '—';
+  } catch (e) { }
+}
+
+/* =========================================================
+   設定
+   ========================================================= */
+function renderSettings() {
+  const root = $('#settings-root');
+  const s = (path, opts) => `<select class="input" data-set="${path}">${opts.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select>`;
+  const sw = path => `<label class="switch"><input type="checkbox" data-set="${path}"><span></span></label>`;
+  const b = settings.beauty;
+  root.innerHTML = `
+    <div class="page-head"><div><h1>個人化設定</h1><p class="sub">設定與紀錄都只存在這台裝置的瀏覽器裡</p></div></div>
+    <div class="set-grid">
+      <div class="card" style="--c:var(--pink)"><h3><i></i>個人資料</h3>
+        <div class="set-row"><span>暱稱</span><input class="input" data-set="profile.name" maxlength="20" placeholder="你的名字"></div>
+        <div class="set-row"><span>一句話介紹</span><input class="input" data-set="profile.bio" maxlength="40" placeholder="顯示在儀表板"></div>
+      </div>
+      <div class="card" style="--c:var(--blue)"><h3><i></i>拍攝</h3>
+        <div class="set-row"><span>預設錄影秒數</span>${s('capture.duration', [['3', '3 秒'], ['5', '5 秒'], ['tl', '縮時']])}</div>
+        <div class="set-row"><span>預設畫面比例</span>${s('capture.ratio', [['16:9', '16:9'], ['1:1', '1:1'], ['4:3', '4:3']])}</div>
+        <div class="set-row"><span>預設拍攝方向</span>${s('capture.orient', [['portrait', '直式'], ['landscape', '橫式']])}</div>
+        <div class="set-row"><span>縮時拍攝間隔<small>每隔多久拍一張</small></span>${s('capture.tlInterval', [['0.5', '0.5 秒'], ['1', '1 秒'], ['2', '2 秒'], ['3', '3 秒']])}</div>
+        <div class="set-row"><span>前鏡頭鏡像</span>${sw('capture.mirror')}</div>
+        <div class="set-row"><span>錄影時收音<small>變更後下次開相機生效</small></span>${sw('capture.audio')}</div>
+      </div>
+      <div class="card" style="--c:var(--soft-pink)"><h3><i></i>美顏（已儲存的設定）</h3>
+        <div class="set-row"><span>瘦臉 / 大眼</span><span class="muted">${b.slim} / ${b.eyes}</span></div>
+        <div class="set-row"><span>皮膚 / 膚色</span><span class="muted">${b.smooth} / ${b.tone}</span></div>
+        <div class="set-row"><span>畫面明暗</span><span class="muted">${settings.brightness}</span></div>
+        <div class="row gap" style="margin-top:10px"><button class="btn soft sm" data-go="capture">到拍攝頁調整</button><button class="btn ghost sm" id="s-beauty-reset">全部重設</button></div>
+      </div>
+      <div class="card" style="--c:var(--sage)"><h3><i></i>時間戳記預設</h3>
+        <div class="set-row"><span>顯示拍攝時間</span>${sw('stamp.show')}</div>
+        <div class="set-row"><span>位置</span>${s('stamp.pos', POS.map(p => [p.v, p.l]))}</div>
+        <div class="set-row"><span>格式</span>${s('stamp.format', [['datetime', '日期＋時間'], ['date', '只有日期'], ['time', '只有時間']])}</div>
+      </div>
+      <div class="card" style="--c:var(--blue)"><h3><i></i>VLOG 自動剪輯</h3>
+        <div class="set-row"><span>影片比例</span>${s('vlog.ratio', [['9:16', '9:16 直式'], ['16:9', '16:9 橫式'], ['1:1', '1:1 方形'], ['4:3', '4:3'], ['3:4', '3:4']])}</div>
+        <div class="set-row"><span>照片停留秒數</span>${s('vlog.photoSec', [['2', '2 秒'], ['3', '3 秒'], ['4', '4 秒'], ['5', '5 秒']])}</div>
+        <div class="set-row"><span>影片片段上限</span>${s('vlog.maxClipSec', [['5', '5 秒'], ['10', '10 秒'], ['15', '15 秒'], ['30', '30 秒'], ['60', '60 秒']])}</div>
+        <div class="set-row"><span>畫面填滿方式</span>${s('vlog.fit', [['blur', '完整＋柔焦底'], ['cover', '裁切填滿']])}</div>
+        <div class="set-row"><span>顯示心情小語</span>${sw('vlog.showMood')}</div>
+        <div class="set-row"><span>片頭／片尾</span>${sw('vlog.intro')}</div>
+        <div class="set-row"><span>保留影片原音</span>${sw('vlog.keepAudio')}</div>
+      </div>
+      <div class="card" style="--c:var(--medium)"><h3><i></i>資料與備份</h3>
+        <p class="sub" style="margin-bottom:10px;line-height:1.7">換手機或清除瀏覽器資料前，請先匯出備份。備份檔包含所有紀錄、照片、影片與設定（已生成的 VLOG 可隨時重新製作，不放進備份以節省空間）。</p>
+        <div class="set-row"><span>目前使用空間</span><span class="muted" id="s-storage">…</span></div>
+        <div class="row gap wrap" style="margin-top:12px">
+          <button class="btn primary sm" id="s-export">匯出備份</button>
+          <button class="btn sage sm" id="s-import">匯入備份</button>
+          <button class="btn danger sm" id="s-clear">清除所有資料</button>
+        </div>
+      </div>
+    </div>
+    <p class="sub" style="text-align:center;margin-top:24px">沙漏 Salog · 第一版</p>`;
+  $$('[data-set]', root).forEach(el => {
+    const p = el.dataset.set, v = p.split('.').reduce((a, k) => a && a[k], settings);
+    if (el.type === 'checkbox') el.checked = !!v; else el.value = String(v ?? '');
+    const evt = el.tagName === 'INPUT' && el.type !== 'checkbox' ? 'change' : 'change';
+    el.addEventListener(evt, () => {
+      let nv = el.type === 'checkbox' ? el.checked : el.value;
+      if (['capture.tlInterval', 'vlog.photoSec', 'vlog.maxClipSec'].includes(p)) nv = +nv;
+      const ks = p.split('.'), last = ks.pop();
+      ks.reduce((a, k) => a[k], settings)[last] = nv;
+      saveSettings(); toast('已儲存');
+      if (p.startsWith('capture.ratio') || p.startsWith('capture.orient') || p.startsWith('stamp.')) Cam.applyLayout();
+      if (p === 'capture.duration') Cam.setDefaultDur(nv);
+    });
+  });
+  $$('[data-go]', root).forEach(b => b.onclick = () => go(b.dataset.go));
+  $('#s-beauty-reset').onclick = () => { settings.beauty = { slim: 0, eyes: 0, smooth: 0, tone: 0 }; settings.brightness = 0; Object.assign(Cam.live.beauty, settings.beauty); saveSettings(); Cam.syncUI(); renderSettings(); toast('美顏已重設'); };
+  $('#s-export').onclick = exportBackup;
+  $('#s-import').onclick = async () => { const f = await pickFiles(false, 'application/json,.json'); if (f[0]) importBackup(f[0]); };
+  $('#s-clear').onclick = clearAll;
+  if (navigator.storage && navigator.storage.estimate) navigator.storage.estimate().then(e => { const x = $('#s-storage'); if (x) x.textContent = fmtSize(e.usage || 0); }).catch(() => { });
+  else $('#s-storage').textContent = '—';
+}
+
+async function exportBackup() {
+  showBusy('正在打包備份…');
+  try {
+    const media = {};
+    for (const r of records) {
+      const b = await IDB.get('media', r.id).catch(() => null);
+      if (b) media[r.id] = await blobToDataURL(b);
+    }
+    const data = { app: 'salog', version: 1, exportedAt: new Date().toISOString(), settings, records, orders, media };
+    downloadBlob(new Blob([JSON.stringify(data)], { type: 'application/json' }), `salog-backup-${today().replaceAll('-', '')}.json`);
+    toast(`已匯出 ${records.length} 筆紀錄`);
+  } catch (e) { console.error(e); toast('匯出失敗：' + e.message); }
+  hideBusy();
+}
+async function importBackup(file) {
+  let data;
+  try { data = JSON.parse(await file.text()); } catch (e) { return toast('檔案格式不正確'); }
+  if (!data || data.app !== 'salog' || !Array.isArray(data.records)) return toast('這不是 Salog 的備份檔');
+  if (!await confirmBox(`備份內有 ${data.records.length} 筆紀錄。\n匯入後會與目前資料合併（相同紀錄以備份為準），並套用備份中的設定。`, '匯入')) return;
+  showBusy('正在匯入…');
+  try {
+    for (const [id, d] of Object.entries(data.media || {})) await IDB.put('media', id, await dataURLToBlob(d));
+    const map = new Map(records.map(r => [r.id, r]));
+    data.records.forEach(r => map.set(r.id, r));
+    records = [...map.values()]; saveRecords();
+    orders = { ...orders, ...(data.orders || {}) }; saveOrders();
+    if (data.settings) { settings = deepMerge(DEFAULTS, data.settings); saveSettings(); Object.assign(Cam.live.beauty, settings.beauty); Cam.setDefaultDur(settings.capture.duration); Cam.applyLayout(); }
+    toast(`匯入完成，共 ${records.length} 筆紀錄`);
+  } catch (e) { console.error(e); toast('匯入失敗：' + e.message); }
+  hideBusy(); refreshViews();
+}
+async function clearAll() {
+  if (!await confirmBox('確定要清除所有紀錄、照片、影片與設定嗎？\n建議先匯出備份。', '下一步', true)) return;
+  if (!await confirmBox('最後確認：清除後無法復原。', '全部清除', true)) return;
+  Object.values(K).forEach(k => localStorage.removeItem(k));
+  try { await IDB.clear('media'); await IDB.clear('vlogs'); } catch (e) { }
+  settings = deepMerge(DEFAULTS, {}); records = []; orders = {}; vlogIndex = {};
+  Object.assign(Cam.live.beauty, settings.beauty); Cam.setDefaultDur(settings.capture.duration); Cam.applyLayout();
+  toast('已清除所有資料'); refreshViews();
+}
+
+/* =========================================================
+   頁面切換
+   ========================================================= */
+let current = 'capture';
+function go(page) {
+  if (page !== current && Cam.isBusy()) return toast('錄影中，請先完成拍攝');
+  current = page;
+  $$('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + page));
+  $$('.tab').forEach(t => t.classList.toggle('active', t.dataset.page === page));
+  if (page === 'capture') Cam.start(); else Cam.stop();
+  refreshViews();
+}
+function refreshViews() {
+  if (current === 'journal') renderJournal();
+  if (current === 'dashboard') renderDashboard();
+  if (current === 'settings') renderSettings();
+}
+$$('.tab').forEach(t => t.onclick = () => go(t.dataset.page));
+document.addEventListener('visibilitychange', () => {
+  if (current !== 'capture' || Cam.isBusy()) return;
+  if (document.hidden) Cam.stop(); else Cam.start();
+});
+if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => { });
+Cam.syncUI();
+Cam.start();
+</script>
+</body>
+</html>
