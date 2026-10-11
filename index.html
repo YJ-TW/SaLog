@@ -423,7 +423,7 @@ const LS = {
 };
 const DEFAULTS = {
   theme: 'light',
-  capture: { duration: '3', timer: '0', ratio: '16:9', mirror: true, audio: true, tlInterval: 1 },
+  capture: { duration: '3', timer: '0', ratio: '16:9', mirror: true, audio: true },
   beauty: { slim: 0, eyes: 0, tone: 0 },
   stamp: { show: true, pos: 'br', format: 'datetime' },
   vlog: { ratio: '9:16', photoSec: 3, maxClipSec: 10, showMood: true, keepAudio: true, fit: 'blur' }
@@ -437,6 +437,7 @@ function deepMerge(base, over) {
   return out;
 }
 let settings = deepMerge(DEFAULTS, LS.get(K.set, {}));
+if (settings.capture.duration === 'tl') settings.capture.duration = 'tl5';   // 舊版的「縮時」
 let records = LS.get(K.rec, []);
 let orders = LS.get(K.ord, {});
 let vlogIndex = LS.get(K.vlog, {});
@@ -868,8 +869,11 @@ const Cam = (() => {
   video.muted = true; video.playsInline = true; video.setAttribute('playsinline', ''); video.autoplay = true;
   let stream = null, facing = 'environment', running = false, raf = 0, tl = null, recorder = null;
   const st = { zoom: 1, dur: String(settings.capture.duration), timer: String(settings.capture.timer || '0'), busy: false, recording: false };
+  if (st.dur === 'tl') st.dur = 'tl5';
   const live = { beauty: { ...settings.beauty } };
-  const TL_MAX = 150;
+  const TL_SECS = 30, TL_EVERY = 250;   // 縮時最多錄 30 秒，每 0.25 秒拍一張
+  const isTL = d => String(d).startsWith('tl');
+  const tlOut = d => +String(d).slice(2) || 5;   // 濃縮成幾秒
 
   /* 橫拿自動變橫式：瀏覽器已把頁面轉橫時直接用橫式；
      畫面鎖定直向時改用重力感應判斷，把預覽框轉 90 度，時間戳記也就跟著橫向顯示 */
@@ -1057,7 +1061,7 @@ const Cam = (() => {
   function setRec(on) {
     st.recording = on;
     $('#btn-video').classList.toggle('rec', on);
-    $('#video-label').textContent = on ? (st.dur === 'tl' ? '停止' : '錄影中') : '錄影';
+    $('#video-label').textContent = on ? (isTL(st.dur) ? '停止' : '錄影中') : '錄影';
     $('#btn-photo').disabled = on; $('#btn-dur').disabled = on; $('#btn-flip').disabled = on;
     $$('#ratio-seg button').forEach(b => b.disabled = on);
     if (!on) badge('');
@@ -1072,7 +1076,7 @@ const Cam = (() => {
   }
 
   function recordVideo() {
-    if (st.dur === 'tl') return tl ? stopTL() : startTL();
+    if (isTL(st.dur)) return tl ? stopTL() : startTL();
     if (isBusy()) return;
     if (!hasFeed()) return noFeed();
     if (!window.MediaRecorder || !canvas.captureStream) return toast('這個瀏覽器不支援錄影，請改用上傳影片');
@@ -1108,25 +1112,34 @@ const Cam = (() => {
     if (isBusy()) return;
     if (!hasFeed()) return noFeed();
     if (!window.MediaRecorder || !canvas.captureStream) return toast('這個瀏覽器不支援縮時錄影');
-    const iv = (+settings.capture.tlInterval || 1) * 1000;
-    tl = { frames: [], thumb: makeThumb(canvas, canvas.width, canvas.height), ts: new Date() };
+    tl = { frames: [], thumb: makeThumb(canvas, canvas.width, canvas.height), ts: new Date(), t0: performance.now(), out: tlOut(st.dur) };
     const cur = tl;
-    const grab = () => canvas.toBlob(b => { if (b && tl === cur) { cur.frames.push(b); if (cur.frames.length >= TL_MAX) stopTL(); } }, 'image/jpeg', 0.85);
+    const secs = () => (performance.now() - cur.t0) / 1000;
+    const grab = () => {
+      if (tl !== cur) return;
+      if (secs() >= TL_SECS) return stopTL();   // 錄滿 30 秒自動停止
+      canvas.toBlob(b => { if (b && tl === cur) cur.frames.push(b); }, 'image/jpeg', 0.85);
+    };
     grab();
-    cur.timer = setInterval(grab, iv);
-    cur.badgeTimer = setInterval(() => badge(`● 縮時 ${cur.frames.length} 張 · 再按一次停止`), 250);
+    cur.timer = setInterval(grab, TL_EVERY);
+    cur.badgeTimer = setInterval(() => badge(`● 縮時 ${Math.min(TL_SECS, Math.floor(secs()))}／${TL_SECS} 秒 · 再按一次停止`), 250);
     setRec(true);
   }
   async function stopTL() {
     if (!tl) return;
     const cur = tl; tl = null;
+    const elapsed = Math.min(TL_SECS, (performance.now() - cur.t0) / 1000);
     clearInterval(cur.timer); clearInterval(cur.badgeTimer);
     await new Promise(r => canvas.toBlob(b => { if (b) cur.frames.push(b); r(); }, 'image/jpeg', 0.85));
     setRec(false);
     if (cur.frames.length < 3) { toast('縮時拍攝太短了，多錄幾秒吧'); return; }
     st.busy = true; showBusy('縮時影片生成中…');
     try {
-      const { blob, duration } = await encodeFrames(cur.frames, canvas.width, canvas.height, 10);
+      // 濃縮成 5 秒或 3 秒（錄得比這還短就維持原長度）；每秒最多 20 張，平均抽取
+      const outDur = Math.min(cur.out, Math.max(1, elapsed));
+      const want = Math.min(cur.frames.length, Math.round(outDur * 20));
+      const frames = Array.from({ length: want }, (_, i) => cur.frames[Math.round(i * (cur.frames.length - 1) / Math.max(1, want - 1))]);
+      const { blob, duration } = await encodeFrames(frames, canvas.width, canvas.height, outDur);
       hideBusy();
       openCapturePreview({ type: 'video', blob, thumb: cur.thumb, duration, ts: cur.ts, w: canvas.width, h: canvas.height, source: 'camera', timelapse: true });
     } catch (e) { console.error(e); hideBusy(); toast('縮時影片生成失敗'); }
@@ -1144,10 +1157,10 @@ const Cam = (() => {
     if (running) await openStream();
     toast(facing === 'user' ? '前鏡頭' : '後鏡頭');
   }
-  const DUR = ['3', '5', 'tl'];
-  const durLabel = d => d === 'tl' ? '縮時' : d + '秒';
-  function cycleDur() { if (isBusy()) return; st.dur = DUR[(DUR.indexOf(st.dur) + 1) % DUR.length]; syncUI(); toast(st.dur === 'tl' ? '縮時：按錄影開始，再按一次停止' : `錄影 ${st.dur} 秒`); }
-  function setDefaultDur(d) { if (!isBusy()) { st.dur = String(d); syncUI(); } }
+  const DUR = ['3', '5', 'tl5', 'tl3'];
+  const durLabel = d => isTL(d) ? `縮時${tlOut(d)}秒` : d + '秒';
+  function cycleDur() { if (isBusy()) return; st.dur = DUR[(DUR.indexOf(st.dur) + 1) % DUR.length]; syncUI(); toast(isTL(st.dur) ? `縮時：最多錄 ${TL_SECS} 秒，濃縮成 ${tlOut(st.dur)} 秒` : `錄影 ${st.dur} 秒`); }
+  function setDefaultDur(d) { if (!isBusy()) { st.dur = String(d) === 'tl' ? 'tl5' : String(d); syncUI(); } }
   const TIMER = ['0', '2', '5', '10'];
   const timerLabel = t => +t ? t + '秒' : '無';
   function cycleTimer() { if (isBusy()) return; st.timer = TIMER[(TIMER.indexOf(st.timer) + 1) % TIMER.length]; syncUI(); toast(+st.timer ? `倒數 ${st.timer} 秒後拍攝` : '不倒數，按下就拍'); }
@@ -1207,7 +1220,7 @@ const Cam = (() => {
 })();
 
 /* 把一張張縮時畫面編成影片 */
-async function encodeFrames(frames, W, H, fps) {
+async function encodeFrames(frames, W, H, seconds) {
   const c = document.createElement('canvas'); c.width = W; c.height = H;
   const x = c.getContext('2d');
   const first = await createImageBitmap(frames[0]); x.drawImage(first, 0, 0, W, H);
@@ -1218,15 +1231,16 @@ async function encodeFrames(frames, W, H, fps) {
   rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
   const done = new Promise(r => rec.onstop = r);
   rec.start(250);
-  for (const f of frames) {
-    const bmp = await createImageBitmap(f);
+  const t0 = performance.now(), dt = seconds * 1000 / frames.length;
+  for (let i = 0; i < frames.length; i++) {
+    const bmp = await createImageBitmap(frames[i]);
     x.drawImage(bmp, 0, 0, W, H); if (bmp.close) bmp.close();
-    await sleep(1000 / fps);
+    await sleep(Math.max(0, t0 + (i + 1) * dt - performance.now()));   // 對齊時間，總長度才會剛好
   }
   await sleep(150);
   rec.stop(); await done;
   cs.getTracks().forEach(t => t.stop());
-  const duration = frames.length / fps + 0.15;
+  const duration = (performance.now() - t0) / 1000;
   return { blob: await fixWebmDuration(new Blob(chunks, { type: baseMime(rec.mimeType || mime) || 'video/webm' }), duration), duration };
 }
 
@@ -1959,10 +1973,9 @@ function renderSettings() {
         <div class="set-row"><span>明暗<small>APP 整體的淺色或深色</small></span>${s('theme', [['light', '淺色'], ['dark', '深色'], ['auto', '跟隨手機設定']])}</div>
       </div>
       <div class="card" style="--c:var(--blue)"><h3><i></i>拍攝</h3>
-        <div class="set-row"><span>預設錄影秒數</span>${s('capture.duration', [['3', '3 秒'], ['5', '5 秒'], ['tl', '縮時']])}</div>
+        <div class="set-row"><span>預設錄影秒數</span>${s('capture.duration', [['3', '3 秒'], ['5', '5 秒'], ['tl5', '縮時（濃縮成 5 秒）'], ['tl3', '縮時（濃縮成 3 秒）']])}</div>
         <div class="set-row"><span>預設倒數計時<small>按下快門後倒數幾秒才拍</small></span>${s('capture.timer', [['0', '無'], ['2', '2 秒'], ['5', '5 秒'], ['10', '10 秒']])}</div>
         <div class="set-row"><span>預設畫面比例</span>${s('capture.ratio', [['16:9', '16:9'], ['1:1', '1:1'], ['4:3', '4:3']])}</div>
-        <div class="set-row"><span>縮時拍攝間隔<small>每隔多久拍一張</small></span>${s('capture.tlInterval', [['0.5', '0.5 秒'], ['1', '1 秒'], ['2', '2 秒'], ['3', '3 秒']])}</div>
         <div class="set-row"><span>前鏡頭鏡像</span>${sw('capture.mirror')}</div>
         <div class="set-row"><span>錄影時收音<small>變更後下次開相機生效</small></span>${sw('capture.audio')}</div>
       </div>
@@ -2001,7 +2014,7 @@ function renderSettings() {
     const evt = el.tagName === 'INPUT' && el.type !== 'checkbox' ? 'change' : 'change';
     el.addEventListener(evt, () => {
       let nv = el.type === 'checkbox' ? el.checked : el.value;
-      if (['capture.tlInterval', 'vlog.photoSec', 'vlog.maxClipSec'].includes(p)) nv = +nv;
+      if (['vlog.photoSec', 'vlog.maxClipSec'].includes(p)) nv = +nv;
       const ks = p.split('.'), last = ks.pop();
       ks.reduce((a, k) => a[k], settings)[last] = nv;
       saveSettings(); toast('已儲存');
