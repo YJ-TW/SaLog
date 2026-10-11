@@ -119,10 +119,10 @@ input[type=range]{accent-color:var(--pink);width:100%}
 .stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:2px 12px;position:relative}
 .frame{position:relative;border-radius:20px;overflow:hidden;background:#3A3631;box-shadow:0 10px 30px rgba(55,53,47,.12);container-type:size;touch-action:none}
 .frame canvas{width:100%;height:100%;display:block}
-.stamp-ov{position:absolute;color:#FFF8F0;font-size:clamp(10px,3.4cqmin,18px);font-weight:500;text-shadow:0 1px 4px rgba(0,0,0,.45);letter-spacing:.04em;white-space:nowrap;line-height:1.2}
+.stamp-ov{position:absolute;color:#FFF8F0;font-size:calc(clamp(10px,3.4cqmin,18px) * var(--k,1));font-weight:500;text-shadow:0 1px 4px rgba(0,0,0,.45);letter-spacing:.04em;white-space:nowrap;line-height:1.2}
 .stamp-ov.tl{top:4.5cqmin;left:4.5cqmin}.stamp-ov.tr{top:4.5cqmin;right:4.5cqmin}
 .stamp-ov.bl{bottom:4.5cqmin;left:4.5cqmin}.stamp-ov.br{bottom:4.5cqmin;right:4.5cqmin}
-#live-stamp{cursor:pointer}
+#live-stamp,#live-stamp2{cursor:pointer}
 .rec-badge{position:absolute;top:12px;left:50%;transform:translateX(-50%);background:rgba(201,147,138,.95);color:#fff;font-size:12.5px;font-weight:700;padding:5px 12px;border-radius:999px;letter-spacing:.03em}
 .cam-fallback{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:20px;background:linear-gradient(160deg,#4A453F,#36322D);color:#F5EDE6;font-size:13.5px;line-height:1.6}
 .cam-fallback svg{width:40px;height:40px;opacity:.7}
@@ -197,11 +197,11 @@ input[type=range]{accent-color:var(--pink);width:100%}
 .media-box{display:flex;justify-content:center;background:var(--chip);border-radius:16px;overflow:hidden;margin-bottom:14px;container-type:inline-size}
 .media-in{position:relative;display:inline-block;max-width:100%}
 .media-in img,.media-in video{display:block;max-width:100%;max-height:42vh;max-height:42dvh}
-.media-in .stamp-ov{font-size:clamp(10px,3cqi,16px)}
+.media-in .stamp-ov{font-size:calc(clamp(10px,3cqi,16px) * var(--k,1))}
 .media-in .stamp-ov.tl{top:12px;left:12px}.media-in .stamp-ov.tr{top:12px;right:12px}
 .media-in .stamp-ov.bl{bottom:12px;left:12px}.media-in .stamp-ov.br{bottom:12px;right:12px}
 .media-in .stamp-ov{pointer-events:none}
-.mood-ov{position:absolute;left:8%;right:8%;text-align:center;color:#fff;font-size:clamp(11px,4.2cqi,20px);font-weight:500;line-height:1.2;text-shadow:0 1px 5px rgba(0,0,0,.5);white-space:pre-wrap;overflow-wrap:anywhere;pointer-events:none}
+.mood-ov{position:absolute;left:8%;right:8%;text-align:center;color:#fff;font-size:calc(clamp(11px,4.2cqi,20px) * var(--k,1));font-weight:500;line-height:1.2;text-shadow:0 1px 5px rgba(0,0,0,.5);white-space:pre-wrap;overflow-wrap:anywhere;pointer-events:none}
 .mood-ov.t{top:12px}.mood-ov.m{top:50%;transform:translateY(-50%)}.mood-ov.b{bottom:12px}
 .form{display:grid;gap:12px}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -277,6 +277,8 @@ input[type=range]{accent-color:var(--pink);width:100%}
 .strip .clip .mood,.strip .badge.off{display:none}
 .strip .badge{left:4px;top:4px;font-size:9.5px;padding:1px 5px}
 .strip .badge svg{width:8px;height:8px}
+.badge.cloud{left:auto;right:6px;top:6px}
+.strip .badge.cloud{right:3px;top:3px}
 /* ---------- VLOG：跨日影像 ---------- */
 .vshift{grid-column:2/-1;font-size:12px;color:var(--gray)}
 .vshift select{font:inherit;color:var(--pink);background:transparent;border:0;border-bottom:1px dashed var(--soft-pink);padding:0 2px;max-width:100%}
@@ -309,20 +311,23 @@ input[type=range]{accent-color:var(--pink);width:100%}
       </div>
     </div>
     <div class="panel" id="panel-stamp">
-      <div class="panel-head"><b>時間戳記</b><span class="hint">點畫面上的時間也能換位置</span></div>
+      <div class="panel-head"><b>時間戳記</b><span class="hint">點畫面上的日期／時間也能換位置</span></div>
       <div class="row gap wrap" style="padding:4px 0">
         <label class="switch"><input type="checkbox" id="stamp-show"><span></span></label><span style="font-size:13px;color:var(--medium);margin-right:6px">顯示</span>
-        <div class="seg sm" id="stamp-pos-seg"></div>
         <select class="input sm" id="stamp-format">
-          <option value="datetime">日期＋時間</option><option value="date">只有日期</option><option value="time">只有時間</option>
+          <option value="datetime">日期＋時間（一起）</option><option value="split">日期、時間分開</option><option value="date">只有日期</option><option value="time">只有時間</option>
         </select>
       </div>
+      <div class="row between wrap gap" style="padding:3px 0"><span class="hint" id="stamp-pos-label">位置</span><div class="seg sm" id="stamp-pos-seg"></div></div>
+      <div class="row between wrap gap" style="padding:3px 0" id="stamp-tpos-row" hidden><span class="hint">時間位置</span><div class="seg sm" id="stamp-tpos-seg"></div></div>
+      <div class="row between wrap gap" style="padding:3px 0"><span class="hint">字體大小</span><div class="seg sm" id="stamp-size-seg"></div></div>
     </div>
 
     <div class="stage" id="stage">
       <div class="frame" id="frame">
         <canvas id="cam-canvas" width="720" height="1280"></canvas>
         <div class="stamp-ov br" id="live-stamp" title="點一下換位置"></div>
+        <div class="stamp-ov s2 br" id="live-stamp2" title="點一下換位置" hidden></div>
         <div class="rec-badge" id="rec-badge" hidden></div>
         <div class="count-ov" id="count-ov" hidden></div>
         <div class="cam-fallback" id="cam-fallback" hidden>
@@ -412,6 +417,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const WEEK = ['日', '一', '二', '三', '四', '五', '六'];
 const POS = [{ v: 'tl', l: '左上' }, { v: 'tr', l: '右上' }, { v: 'bl', l: '左下' }, { v: 'br', l: '右下' }];
 const MPOS = [{ v: 't', l: '上方' }, { v: 'm', l: '中間' }, { v: 'b', l: '下方' }];
+const SIZES = [{ v: 0.8, l: '小' }, { v: 1, l: '中' }, { v: 1.4, l: '大' }, { v: 1.9, l: '特大' }];
 const fmtDate = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const fmtTime = d => `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 const dotDate = ds => (ds || '').replaceAll('-', '.');
@@ -423,7 +429,7 @@ const today = () => fmtDate(new Date());
 const baseMime = m => (m || '').split(';')[0];
 
 /* ---------------- storage ---------------- */
-const K = { rec: 'salog.records', set: 'salog.settings', ord: 'salog.orders', vlog: 'salog.vlogs', del: 'salog.deleted' };
+const K = { rec: 'salog.records', set: 'salog.settings', ord: 'salog.orders', vlog: 'salog.vlogs', del: 'salog.deleted', cloud: 'salog.cloud' };
 const LS = {
   get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { toast('瀏覽器儲存空間不足，請先匯出備份或刪除部分紀錄'); return false; } }
@@ -434,7 +440,8 @@ const DEFAULTS = {
   theme: 'light',
   capture: { duration: '3', timer: '0', ratio: '16:9', mirror: true, audio: true },
   beauty: { slim: 0, eyes: 0, tone: 0 },
-  stamp: { show: true, pos: 'br', format: 'datetime' },
+  stamp: { show: true, pos: 'br', timePos: 'br', size: 1, format: 'datetime' },
+  moodSize: 1,
   vlog: { ratio: '9:16', photoSec: 3, maxClipSec: 10, showMood: true, keepAudio: true, fit: 'blur' }
 };
 function deepMerge(base, over) {
@@ -447,9 +454,11 @@ function deepMerge(base, over) {
 }
 let settings = deepMerge(DEFAULTS, LS.get(K.set, {}));
 if (settings.capture.duration === 'tl') settings.capture.duration = 'tl5';   // 舊版的「縮時」
+if (settings.google && settings.google.autoFree === undefined) settings.google.autoFree = true;
 let records = LS.get(K.rec, []);
 let orders = LS.get(K.ord, {});
 let vlogIndex = LS.get(K.vlog, {});
+let cloudOnly = LS.get(K.cloud, {});   // 已經傳到雲端、手機上不留檔的影片（id → true）
 let deleted = LS.get(K.del, {});   // 刪除過的紀錄（id → 時間），同步時用來通知雲端和其他裝置
 const saveSettings = () => { const ok = LS.set(K.set, settings); gQueue(); return ok; };
 const saveRecords = () => { const ok = LS.set(K.rec, records); gQueue(); return ok; };
@@ -677,8 +686,34 @@ function stampText(r, fmt = settings.stamp.format) {
   const d = dotDate(r.date), t = (r.time || '').slice(0, 5);
   return fmt === 'date' ? d : fmt === 'time' ? t : `${d}  ${t}`;
 }
-function drawStamp(ctx, text, pos, W, H) {
-  const s = Math.min(W, H), fs = Math.round(s * 0.034), m = s * 0.045;
+/* 日期與時間可以一起或分開顯示（例如左下日期、右下時間），字體大小有 小／中／大／特大 */
+const flipH = p => p[0] + (p[1] === 'l' ? 'r' : 'l');
+function stampLook(r) {
+  const st = r.stamp || {}, g = settings.stamp;
+  return { pos: st.pos || g.pos || 'br', timePos: st.timePos || g.timePos || 'br', size: st.size || g.size || 1 };
+}
+function stampParts(r) {
+  const L = stampLook(r), st = r.stamp || {}, fmt = settings.stamp.format;
+  const d = dotDate(r.date), t = (r.time || '').slice(0, 5), one = text => [{ text, pos: L.pos, size: L.size }];
+  if (st.text) return one(st.text);
+  if (fmt === 'date') return one(d);
+  if (fmt === 'time') return one(t);
+  if (fmt === 'split' && L.pos !== L.timePos) return [{ text: d, pos: L.pos, size: L.size }, { text: t, pos: L.timePos, size: L.size }];
+  return one(`${d}  ${t}`);   // 一起顯示；分開但位置相同時也合在一起，才不會疊在一起
+}
+// box 裡要有 .stamp-ov 和 .stamp-ov.s2 兩個元素
+function paintStamps(box, r, show = true) {
+  const parts = stampParts(r), els = [$('.stamp-ov:not(.s2)', box), $('.stamp-ov.s2', box)];
+  els.forEach((el, i) => {
+    if (!el) return;
+    const p = parts[i]; el.hidden = !show || !p;
+    if (!p) return;
+    el.className = 'stamp-ov ' + (i ? 's2 ' : '') + p.pos;
+    el.style.setProperty('--k', p.size); el.textContent = p.text;
+  });
+}
+function drawStamp(ctx, text, pos, W, H, size = 1) {
+  const s = Math.min(W, H), fs = Math.round(s * 0.034 * size), m = s * 0.045;
   ctx.save();
   ctx.font = `500 ${fs}px "Noto Sans TC", sans-serif`;
   ctx.textBaseline = pos[0] === 't' ? 'top' : 'bottom';
@@ -688,6 +723,7 @@ function drawStamp(ctx, text, pos, W, H) {
   ctx.fillText(text, pos[1] === 'l' ? m : W - m, pos[0] === 't' ? m : H - m);
   ctx.restore();
 }
+function drawStamps(ctx, r, W, H) { stampParts(r).forEach(p => drawStamp(ctx, p.text, p.pos, W, H, p.size)); }
 
 /* =========================================================
    臉部辨識（MediaPipe Face Landmarker，需要網路載入；載入失敗時退回簡易效果）
@@ -1193,14 +1229,17 @@ const Cam = (() => {
     $$('#panel-beauty [data-b]').forEach(i => { i.value = live.beauty[i.dataset.b]; i.nextElementSibling.textContent = live.beauty[i.dataset.b]; });
     $('#stamp-show').checked = settings.stamp.show;
     $('#stamp-format').value = settings.stamp.format;
+    const split = settings.stamp.format === 'split';
+    $('#stamp-pos-label').textContent = split ? '日期位置' : '位置';
+    $('#stamp-tpos-row').hidden = !split;
     $('#stamp-pos-seg').innerHTML = POS.map(p => `<button data-v="${p.v}" class="${settings.stamp.pos === p.v ? 'on' : ''}">${p.l}</button>`).join('');
+    $('#stamp-tpos-seg').innerHTML = POS.map(p => `<button data-v="${p.v}" class="${settings.stamp.timePos === p.v ? 'on' : ''}">${p.l}</button>`).join('');
+    $('#stamp-size-seg').innerHTML = SIZES.map(p => `<button data-v="${p.v}" class="${settings.stamp.size === p.v ? 'on' : ''}">${p.l}</button>`).join('');
     updateLiveStamp();
   }
   function updateLiveStamp() {
-    const el = $('#live-stamp'), now = new Date();
-    el.hidden = !settings.stamp.show;
-    el.className = 'stamp-ov ' + settings.stamp.pos;
-    el.textContent = stampText({ date: fmtDate(now), time: fmtTime(now) });
+    const now = new Date();
+    paintStamps($('#frame'), { date: fmtDate(now), time: fmtTime(now), stamp: {} }, settings.stamp.show);
   }
   setInterval(() => { if (running) updateLiveStamp(); }, 1000);
 
@@ -1224,9 +1263,16 @@ const Cam = (() => {
   $('#beauty-reset').onclick = () => { live.beauty = { slim: 0, eyes: 0, tone: 0 }; syncUI(); };
   $('#beauty-save').onclick = () => { settings.beauty = { ...live.beauty }; saveSettings(); toast('美顏設定已儲存'); };
   $('#stamp-show').onchange = e => { settings.stamp.show = e.target.checked; saveSettings(); updateLiveStamp(); };
-  $('#stamp-format').onchange = e => { settings.stamp.format = e.target.value; saveSettings(); updateLiveStamp(); };
+  $('#stamp-format').onchange = e => {
+    settings.stamp.format = e.target.value;
+    if (e.target.value === 'split' && settings.stamp.pos === settings.stamp.timePos) settings.stamp.pos = flipH(settings.stamp.pos);   // 預設日期放另一邊
+    saveSettings(); syncUI();
+  };
   $('#stamp-pos-seg').onclick = e => { const b = e.target.closest('button'); if (!b) return; settings.stamp.pos = b.dataset.v; saveSettings(); syncUI(); };
+  $('#stamp-tpos-seg').onclick = e => { const b = e.target.closest('button'); if (!b) return; settings.stamp.timePos = b.dataset.v; saveSettings(); syncUI(); };
+  $('#stamp-size-seg').onclick = e => { const b = e.target.closest('button'); if (!b) return; settings.stamp.size = +b.dataset.v; saveSettings(); syncUI(); };
   $('#live-stamp').onclick = () => { const i = POS.findIndex(p => p.v === settings.stamp.pos); settings.stamp.pos = POS[(i + 1) % 4].v; saveSettings(); syncUI(); };
+  $('#live-stamp2').onclick = () => { const i = POS.findIndex(p => p.v === settings.stamp.timePos); settings.stamp.timePos = POS[(i + 1) % 4].v; saveSettings(); syncUI(); };
   $('#cam-retry').onclick = () => openStream();
   $('#cam-upload').onclick = () => uploadFlow();
   let pinch = null;
@@ -1270,8 +1316,8 @@ async function encodeFrames(frames, W, H, seconds) {
 function newRecordFrom(item) {
   const d = item.ts || new Date();
   return {
-    id: uid(), type: item.type, date: fmtDate(d), time: fmtTime(d), mood: '', moodPos: 'b',
-    stamp: { show: settings.stamp.show, pos: settings.stamp.pos, text: '' },
+    id: uid(), type: item.type, date: fmtDate(d), time: fmtTime(d), mood: '', moodPos: 'b', moodSize: settings.moodSize || 1,
+    stamp: { show: settings.stamp.show, pos: settings.stamp.pos, timePos: settings.stamp.timePos, size: settings.stamp.size, text: '' },
     inVlog: true, duration: item.duration || 0, w: item.w || 0, h: item.h || 0,
     mime: item.blob.type, size: item.blob.size, thumb: item.thumb, source: item.source || 'upload',
     timelapse: !!item.timelapse, createdAt: Date.now(), updatedAt: Date.now()
@@ -1282,11 +1328,13 @@ async function saveNewRecord(r, blob) {
   records.push(r); saveRecords();
 }
 function recordFormHTML(r, mediaHTML) {
+  const L = stampLook(r), ms = r.moodSize || settings.moodSize || 1;
   return `
-  <div class="media-box"><div class="media-in">${mediaHTML}<div class="stamp-ov"></div><div class="mood-ov"></div></div></div>
+  <div class="media-box"><div class="media-in">${mediaHTML}<div class="stamp-ov"></div><div class="stamp-ov s2"></div><div class="mood-ov"></div></div></div>
   <div class="form">
     <label class="f"><span class="f-label">心情小語</span><textarea class="input" name="mood" rows="2" maxlength="120" placeholder="寫下此刻的心情點滴…">${esc(r.mood)}</textarea></label>
     <div class="row between wrap gap"><span class="f-label" style="margin:0">小語在畫面上的位置</span><div class="seg sm" data-name="moodPos">${MPOS.map(p => `<button type="button" data-v="${p.v}" class="${(r.moodPos || 'b') === p.v ? 'on' : ''}">${p.l}</button>`).join('')}</div></div>
+    <div class="row between wrap gap"><span class="f-label" style="margin:0">小語字體大小</span><div class="seg sm" data-name="moodSize">${SIZES.map(p => `<button type="button" data-v="${p.v}" class="${ms === p.v ? 'on' : ''}">${p.l}</button>`).join('')}</div></div>
     <div class="two">
       <label class="f"><span class="f-label">日期</span><input class="input" type="date" name="date" value="${r.date}" required></label>
       <label class="f"><span class="f-label">時間</span><input class="input" type="time" step="1" name="time" value="${r.time}" required></label>
@@ -1296,13 +1344,15 @@ function recordFormHTML(r, mediaHTML) {
         <span class="f-label" style="margin:0">畫面上的時間戳記</span>
         <div class="row gap"><span class="muted" style="font-size:12.5px">顯示</span><label class="switch sm"><input type="checkbox" name="stampShow" ${r.stamp.show ? 'checked' : ''}><span></span></label></div>
       </div>
-      <div class="seg sm" data-name="stampPos" style="justify-self:start">${POS.map(p => `<button type="button" data-v="${p.v}" class="${r.stamp.pos === p.v ? 'on' : ''}">${p.l}</button>`).join('')}</div>
+      <div class="row between wrap gap"><span class="hint" data-lbl="pos">位置</span><div class="seg sm" data-name="stampPos">${POS.map(p => `<button type="button" data-v="${p.v}" class="${L.pos === p.v ? 'on' : ''}">${p.l}</button>`).join('')}</div></div>
+      <div class="row between wrap gap" data-row="tpos"><span class="hint">時間位置</span><div class="seg sm" data-name="stampTpos">${POS.map(p => `<button type="button" data-v="${p.v}" class="${L.timePos === p.v ? 'on' : ''}">${p.l}</button>`).join('')}</div></div>
+      <div class="row between wrap gap"><span class="hint">字體大小</span><div class="seg sm" data-name="stampSize">${SIZES.map(p => `<button type="button" data-v="${p.v}" class="${L.size === p.v ? 'on' : ''}">${p.l}</button>`).join('')}</div></div>
       <input class="input" name="stampText" maxlength="40" placeholder="自訂文字（留空會自動顯示日期與時間）" value="${esc(r.stamp.text)}">
     </div>
   </div>`;
 }
 function bindRecordForm(root, r) {
-  const ov = $('.media-in .stamp-ov', root), mv = $('.media-in .mood-ov', root);
+  const box = $('.media-in', root), mv = $('.media-in .mood-ov', root);
   const read = () => {
     r.mood = $('[name=mood]', root).value.trim();
     r.date = $('[name=date]', root).value || r.date;
@@ -1313,9 +1363,16 @@ function bindRecordForm(root, r) {
     r.stamp.text = $('[name=stampText]', root).value.trim();
   };
   const upd = () => {
-    read(); ov.className = 'stamp-ov ' + r.stamp.pos; ov.hidden = !r.stamp.show; ov.textContent = stampText(r);
-    mv.className = 'mood-ov ' + (r.moodPos || 'b'); mv.hidden = !r.mood; mv.textContent = r.mood;
+    read(); paintStamps(box, r, r.stamp.show);
+    const split = settings.stamp.format === 'split' && !r.stamp.text;
+    $('[data-row=tpos]', root).hidden = !split; $('[data-lbl=pos]', root).textContent = split ? '日期位置' : '位置';
+    mv.className = 'mood-ov ' + (r.moodPos || 'b'); mv.style.setProperty('--k', r.moodSize || settings.moodSize || 1);
+    mv.hidden = !r.mood; mv.textContent = r.mood;
   };
+  const segBind = (name, apply) => $$(`[data-name=${name}] button`, root).forEach(b => b.onclick = () => {
+    apply(b.dataset.v);
+    $$(`[data-name=${name}] button`, root).forEach(x => x.classList.toggle('on', x === b)); upd();
+  });
   root.addEventListener('input', upd); root.addEventListener('change', upd);
   $$('[data-name=stampPos] button', root).forEach(b => b.onclick = () => {
     r.stamp.pos = b.dataset.v;
@@ -1325,6 +1382,7 @@ function bindRecordForm(root, r) {
     r.moodPos = b.dataset.v;
     $$('[data-name=moodPos] button', root).forEach(x => x.classList.toggle('on', x === b)); upd();
   });
+  segBind('stampTpos', v => r.stamp.timePos = v); segBind('stampSize', v => r.stamp.size = +v); segBind('moodSize', v => r.moodSize = +v);
   upd();
   return read;
 }
@@ -1352,7 +1410,7 @@ async function openEditor(id) {
   const r0 = getRec(id); if (!r0) return;
   const r = JSON.parse(JSON.stringify(r0));
   r.stamp = r.stamp || { show: true, pos: 'br', text: '' };
-  let blob = null; try { blob = await IDB.get('media', id); } catch (e) { }
+  let blob = null; try { blob = await mediaBlob(id); } catch (e) { toast(e.message || '無法載入影像'); }
   const url = blob ? URL.createObjectURL(blob) : null;
   const media = blob ? mediaTag(r.type, url) : `<div class="missing">找不到這筆的影像檔</div>`;
   const info = [r.type === 'photo' ? '照片' : (r.timelapse ? '縮時影片' : '影片') + ' ' + fmtDur(r.duration), r.source === 'camera' ? '相機拍攝' : '上傳', r.size ? fmtSize(r.size) : ''].filter(Boolean).join(' · ');
@@ -1379,6 +1437,7 @@ async function openEditor(id) {
 async function deleteRecord(id) {
   try { await IDB.del('media', id); } catch (e) { }
   deleted[id] = Date.now(); LS.set(K.del, deleted);
+  delete cloudOnly[id]; LS.set(K.cloud, cloudOnly); G.cache.delete(id);
   records = records.filter(r => r.id !== id); saveRecords();
   for (const d in orders) orders[d] = orders[d].filter(x => x !== id);
   saveOrders();
@@ -1494,17 +1553,27 @@ async function showViewerMedia(r) {
   const box = $('#vw-media');
   if (J.key !== r.id) {
     J.key = r.id;
-    let blob = null; try { blob = await IDB.get('media', r.id); } catch (e) { }
+    if (cloudOnly[r.id] && !(await IDB.get('media', r.id).catch(() => null))) box.innerHTML = '<div class="missing">☁ 從雲端載入中…</div>';
+    let blob = null; try { blob = await mediaBlob(r.id, { quiet: true }); } catch (e) { }
     if (J.key !== r.id) return;   // 等待時已經切到別支
     if (J.url) URL.revokeObjectURL(J.url);
     J.url = blob ? URL.createObjectURL(blob) : null;
-    box.innerHTML = (blob ? mediaTag(r.type, J.url) : '<div class="missing">找不到這筆的影像檔</div>') + '<div class="stamp-ov"></div><div class="mood-ov"></div>';
+    const gone = cloudOnly[r.id] && !blob
+      ? '<div class="missing">☁ 這支影片存在雲端<br><button class="btn primary sm" data-load style="margin-top:10px">載入影片</button></div>'
+      : '<div class="missing">找不到這筆的影像檔</div>';
+    box.innerHTML = (blob ? mediaTag(r.type, J.url) : gone) + '<div class="stamp-ov"></div><div class="stamp-ov s2"></div><div class="mood-ov"></div>';
+    const ld = $('[data-load]', box);
+    if (ld) ld.onclick = async () => {
+      ld.disabled = true; ld.textContent = '載入中…';
+      try { await mediaBlob(r.id); } catch (e) { toast(e.message || '無法載入'); }
+      J.key = ''; renderViewer();
+    };
     scheduleAuto();
   }
-  const ov = $('.stamp-ov', box), mv = $('.mood-ov', box), stp = r.stamp || {};
-  if (!ov || !mv) return;
-  ov.className = 'stamp-ov ' + (stp.pos || 'br'); ov.hidden = !stp.show; ov.textContent = stampText(r);
-  mv.className = 'mood-ov ' + (r.moodPos || 'b'); mv.hidden = !r.mood; mv.textContent = r.mood || '';
+  const mv = $('.mood-ov', box); if (!mv) return;
+  paintStamps(box, r, !!(r.stamp && r.stamp.show));
+  mv.className = 'mood-ov ' + (r.moodPos || 'b'); mv.style.setProperty('--k', r.moodSize || settings.moodSize || 1);
+  mv.hidden = !r.mood; mv.textContent = r.mood || '';
 }
 function stepViewer(d) {
   const i = J.list.findIndex(r => r.id === J.cur), t = J.list[i + d];
@@ -1561,7 +1630,7 @@ $('#vw-dl').onclick = () => { if (J.cur) { pauseViewer(); openDownload(J.cur); }
 const mediaExt = mime => { const m = baseMime(mime); return m.startsWith('video/') ? extOf(m) : m === 'image/png' ? 'png' : m === 'image/webp' ? 'webp' : m === 'image/gif' ? 'gif' : 'jpg'; };
 async function openDownload(id) {
   const r = getRec(id); if (!r) return;
-  let blob = null; try { blob = await IDB.get('media', id); } catch (e) { }
+  let blob = null; try { blob = await mediaBlob(id); } catch (e) { toast(e.message || '無法載入影像'); }
   if (!blob) return toast('找不到這筆的影像檔');
   const isVideo = r.type === 'video', canSh = !!(navigator.canShare && navigator.share);
   const m = openModal(`
@@ -1587,8 +1656,8 @@ async function openDownload(id) {
         const img = await loadImg(url), c = document.createElement('canvas');
         c.width = img.naturalWidth; c.height = img.naturalHeight;
         const x = c.getContext('2d'); x.drawImage(img, 0, 0);
-        if (incD) drawStamp(x, stampText(rr), rr.stamp.pos || 'br', c.width, c.height);
-        if (incM) drawMood(x, r.mood, c.width, c.height, 1, r.moodPos || 'b');
+        if (incD) drawStamps(x, rr, c.width, c.height);
+        if (incM) drawMood(x, r.mood, c.width, c.height, 1, r.moodPos || 'b', r.moodSize || settings.moodSize || 1);
         return { blob: await new Promise(res => c.toBlob(res, 'image/jpeg', 0.92)) };
       }
       if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) throw new Error('這個瀏覽器不支援重新錄製影片');
@@ -1637,6 +1706,7 @@ function clipCard(r) {
     <div class="th" style="background-image:url(${r.thumb || ''})">
       ${r.type === 'video' ? `<span class="badge"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4l13 8-13 8z"/></svg>${r.timelapse ? '縮時 ' : ''}${fmtDur(r.duration)}</span>` : ''}
       ${off ? '<span class="badge off">不放入 VLOG</span>' : ''}
+      ${cloudOnly[r.id] ? '<span class="badge cloud" title="影片在雲端">☁</span>' : ''}
     </div>
     <div class="meta"><div class="time">${(r.time || '').slice(0, 5)}</div><div class="mood">${esc(r.mood) || '<span class="muted">—</span>'}</div></div>
   </button>`;
@@ -1806,6 +1876,7 @@ function openVlogEditor(date) {
   async function generate() {
     const ids = order.filter(id => getRec(id) && getRec(id).inVlog !== false);
     if (!ids.length) return toast('沒有可用的片段');
+    if (ids.some(id => cloudOnly[id] && !G.cache.has(id)) && !gHasToken()) { try { await gToken(); } catch (e) { return toast(e.message || '需要先登入 Google'); } }   // 有影片在雲端：先登入，才能下載來剪輯
     if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) return toast('這個瀏覽器不支援生成影片，建議使用 Chrome 或最新版 Safari');
     cancelled = false;
     body.innerHTML = `<div class="render">
@@ -1893,8 +1964,8 @@ function wrapText(ctx, text, maxW, maxLines = 3) {
   if (lines.length > maxLines) { lines.length = maxLines; lines[maxLines - 1] = lines[maxLines - 1].slice(0, -1) + '…'; }
   return lines;
 }
-function drawMood(ctx, text, W, H, alpha, pos = 'b') {
-  const s = Math.min(W, H), fs = Math.round(s * 0.046), lh = fs * 1.5;
+function drawMood(ctx, text, W, H, alpha, pos = 'b', size = 1) {
+  const s = Math.min(W, H), fs = Math.round(s * 0.046 * size), lh = fs * 1.5;
   ctx.save(); ctx.globalAlpha = alpha;
   ctx.font = `500 ${fs}px "Noto Sans TC", sans-serif`;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -1912,8 +1983,8 @@ function drawSeg(ctx, sg, t, W, H, opt, date, count) {
   ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
   if (sg.kind === 'photo') drawFit(ctx, sg.img, sg.img.naturalWidth, sg.img.naturalHeight, W, H, opt.fit, 1);
   else if (sg.v.videoWidth) drawFit(ctx, sg.v, sg.v.videoWidth, sg.v.videoHeight, W, H, opt.fit, 1);
-  if (r.stamp && r.stamp.show) drawStamp(ctx, stampText(r), r.stamp.pos || 'br', W, H);
-  if (opt.showMood && r.mood) drawMood(ctx, r.mood, W, H, 1, r.moodPos || 'b');
+  if (r.stamp && r.stamp.show) drawStamps(ctx, r, W, H);
+  if (opt.showMood && r.mood) drawMood(ctx, r.mood, W, H, 1, r.moodPos || 'b', r.moodSize || settings.moodSize || 1);
 }
 
 async function renderVlog({ date, ids, recs, size, opt, canvas, onProgress, isCancelled }) {
@@ -1924,7 +1995,7 @@ async function renderVlog({ date, ids, recs, size, opt, canvas, onProgress, isCa
   const urls = [], segs = [];
   for (const r of recs || ids.map(getRec)) {
     const id = r.id;
-    const blob = await IDB.get('media', id).catch(() => null);
+    const blob = await mediaBlob(id).catch(() => null);
     if (!blob) continue;
     const url = URL.createObjectURL(blob); urls.push(url);
     try {
@@ -2001,7 +2072,7 @@ async function renderVlog({ date, ids, recs, size, opt, canvas, onProgress, isCa
 const G = {
   clientId: '913254491967-797j0f2jqlfq343oef3470nk7sc2eatd.apps.googleusercontent.com',
   drive: 'https://www.googleapis.com/auth/drive.appdata',
-  token: '', exp: 0, syncing: false, timer: 0,
+  token: '', exp: 0, syncing: false, timer: 0, names: null, cache: new Map(),
   api: 'https://www.googleapis.com/drive/v3', up: 'https://www.googleapis.com/upload/drive/v3'
 };
 function gLoad() {
@@ -2043,7 +2114,7 @@ async function gFetch(url, opt = {}) {
 async function gList() {
   const out = []; let page = '';
   do {
-    const j = await (await gFetch(`${G.api}/files?spaces=appDataFolder&pageSize=1000&fields=nextPageToken,files(id,name)${page ? '&pageToken=' + encodeURIComponent(page) : ''}`)).json();
+    const j = await (await gFetch(`${G.api}/files?spaces=appDataFolder&pageSize=1000&fields=nextPageToken,files(id,name,size)${page ? '&pageToken=' + encodeURIComponent(page) : ''}`)).json();
     out.push(...(j.files || [])); page = j.nextPageToken || '';
   } while (page);
   return out;
@@ -2063,6 +2134,23 @@ async function gCreate(name, blob) {
   return gFetch(`${G.up}/files?uploadType=multipart&fields=id`, { method: 'POST', headers: { 'Content-Type': 'multipart/related; boundary=' + b }, body });
 }
 const gUpdate = (id, blob) => gFetch(`${G.up}/files/${id}?uploadType=media`, { method: 'PATCH', headers: { 'Content-Type': baseMime(blob.type) || 'application/octet-stream' }, body: blob });
+
+/* 影像檔：先看手機裡有沒有；沒有而且已經釋放到雲端的，就從 Google 雲端硬碟下載。
+   quiet = true 時不會彈出登入視窗（用在自動播放），拿不到就回傳 null */
+async function mediaBlob(id, { quiet = false } = {}) {
+  let b = null; try { b = await IDB.get('media', id); } catch (e) { }
+  if (b) return b;
+  if (!cloudOnly[id] || !settings.google) return null;
+  if (G.cache.has(id)) return G.cache.get(id);
+  if (!gHasToken()) { if (quiet) return null; await gToken(); }
+  if (!G.names || !G.names.has('media-' + id)) G.names = new Map((await gList()).map(f => [f.name, f.id]));
+  const fid = G.names.get('media-' + id); if (!fid) return null;
+  const r = getRec(id), raw = await (await gFetch(`${G.api}/files/${fid}?alt=media`)).blob();
+  b = new Blob([raw], { type: (r && r.mime) || raw.type });
+  G.cache.set(id, b);
+  while (G.cache.size > 3) G.cache.delete(G.cache.keys().next().value);   // 只暫存在記憶體，最多 3 支
+  return b;
+}
 
 /* 同步：雙向合併。同一筆以較新修改的為準；刪除過的不會再被另一台裝置帶回來 */
 async function gSync(silent) {
@@ -2090,13 +2178,17 @@ async function gSync(silent) {
     LS.set(K.rec, records); LS.set(K.ord, orders); LS.set(K.del, deleted); LS.set(K.set, settings);
     // 影像檔：雲端有、這裡沒有的抓下來；這裡有、雲端沒有的傳上去
     const have = new Set(await IDB.keys('media'));
-    const down = records.filter(r => !have.has(r.id) && names.has('media-' + r.id));
+    const wantFree = settings.google.autoFree !== false;
+    // 雲端有、手機沒有的影片：開了「自動釋放空間」就只標記成在雲端，需要時才下載
+    records.forEach(r => { if (!have.has(r.id) && names.has('media-' + r.id) && r.type === 'video' && wantFree) cloudOnly[r.id] = true; });
+    const down = records.filter(r => !have.has(r.id) && names.has('media-' + r.id) && !cloudOnly[r.id]);
     const up = records.filter(r => have.has(r.id) && !names.has('media-' + r.id));
     let i = 0;
     for (const r of down) {
       say(`同步中…下載影像 ${++i}／${down.length}`);
       const buf = await (await gFetch(`${G.api}/files/${names.get('media-' + r.id)}?alt=media`)).blob();
       await IDB.put('media', r.id, new Blob([buf], { type: r.mime || buf.type }));
+      delete cloudOnly[r.id];
     }
     i = 0;
     for (const r of up) {
@@ -2109,8 +2201,24 @@ async function gSync(silent) {
     const { google: _g, ...cloudSettings } = settings;
     const index = new Blob([JSON.stringify({ app: 'salog', version: 1, syncedAt: new Date().toISOString(), settings: cloudSettings, records, orders, deleted })], { type: 'application/json' });
     if (names.has('salog.json')) await gUpdate(names.get('salog.json'), index); else await gCreate('salog.json', index);
+    // 釋放手機空間：確認雲端上的檔案大小和手機上的一樣，才刪掉手機裡的影片
+    let freed = 0;
+    if (wantFree) {
+      say('同步中…釋放手機空間');
+      const after = await gList();
+      G.names = new Map(after.map(x => [x.name, x.id]));
+      const sizes = new Map(after.map(x => [x.name, +x.size]));
+      const local = new Set(await IDB.keys('media'));
+      for (const r of records) {
+        if (r.type !== 'video' || !local.has(r.id)) continue;
+        const b = await IDB.get('media', r.id);
+        if (b && sizes.get('media-' + r.id) === b.size) { await IDB.del('media', r.id); cloudOnly[r.id] = true; freed++; }
+      }
+    } else G.names = names;
+    Object.keys(cloudOnly).forEach(id => { if (!records.some(r => r.id === id)) delete cloudOnly[id]; });
+    LS.set(K.cloud, cloudOnly);
     settings.google.syncedAt = Date.now(); LS.set(K.set, settings);
-    if (!silent) toast(`同步完成：上傳 ${up.length}、下載 ${down.length}`);
+    if (!silent) toast(`同步完成：上傳 ${up.length}、下載 ${down.length}${freed ? `、釋放 ${freed} 支影片的手機空間` : ''}`);
   } catch (e) {
     console.error(e);
     if (!silent) toast('同步沒有完成：' + e.message);
@@ -2133,7 +2241,7 @@ async function gSignIn() {
     const u = await (await gFetch('https://www.googleapis.com/oauth2/v3/userinfo')).json();
     const old = settings.google;
     if (old && old.sub && old.sub !== u.sub && records.length && !await confirmBox(`這支裝置的日誌目前綁定 ${old.email || old.name}。\n改用 ${u.email || u.name} 會把這裡的日誌合併到新帳號，確定嗎？`, '改用新帳號')) { G.token = ''; return; }
-    settings.google = { sub: u.sub, name: u.name || '', email: u.email || '', picture: u.picture || '', syncedAt: old && old.sub === u.sub ? old.syncedAt : 0 };
+    settings.google = { sub: u.sub, name: u.name || '', email: u.email || '', picture: u.picture || '', syncedAt: old && old.sub === u.sub ? old.syncedAt : 0, autoFree: old && old.sub === u.sub ? old.autoFree !== false : true };
     // 名稱和頭貼先帶入 Google 的，之後仍可在「個人資料」修改
     if (!settings.profile.name && u.name) settings.profile.name = u.name;
     if (!settings.profile.avatar && u.picture) {
@@ -2146,7 +2254,7 @@ async function gSignIn() {
 async function gSignOut() {
   if (!await confirmBox('登出後，這支裝置上的日誌和雲端的備份都會保留，只是不再自動同步。', '登出')) return;
   try { if (G.token && window.google) google.accounts.oauth2.revoke(G.token, () => { }); } catch (e) { }
-  G.token = ''; G.exp = 0; clearTimeout(G.timer);
+  G.token = ''; G.exp = 0; clearTimeout(G.timer); G.cache.clear();
   settings.google = null; saveSettings(); refreshViews(); toast('已登出');
 }
 function gCardHTML() {
@@ -2158,6 +2266,7 @@ function gCardHTML() {
   return `
         <div class="set-row"><span class="row gap" style="min-width:0"><span class="avatar" style="${g.picture ? `background-image:url(${esc(g.picture)})` : ''}">${g.picture ? '' : esc([...(g.name || 'G')][0])}</span><span style="min-width:0;overflow:hidden;text-overflow:ellipsis">${esc(g.name)}<small>${esc(g.email)}</small></span></span></div>
         <div class="set-row"><span>備份狀態<small id="g-status">${when}${gHasToken() ? '' : '（需要再按一次同步來確認登入）'}</small></span></div>
+        <div class="set-row"><span>同步後自動釋放手機空間<small>影片上傳成功後，會從手機刪掉影片檔，要看時再從雲端載入（需要網路和登入）。照片會留在手機。</small></span><label class="switch"><input type="checkbox" data-set="google.autoFree"><span></span></label></div>
         <div class="row gap wrap" style="margin-top:12px"><button class="btn primary sm" id="g-sync">立即同步</button><button class="btn ghost sm" id="g-out">登出</button></div>`;
 }
 function gBind() {
@@ -2218,8 +2327,11 @@ function renderSettings() {
       </div>
       <div class="card" style="--c:var(--sage)"><h3><i></i>時間戳記預設</h3>
         <div class="set-row"><span>顯示拍攝時間</span>${sw('stamp.show')}</div>
-        <div class="set-row"><span>位置</span>${s('stamp.pos', POS.map(p => [p.v, p.l]))}</div>
-        <div class="set-row"><span>格式</span>${s('stamp.format', [['datetime', '日期＋時間'], ['date', '只有日期'], ['time', '只有時間']])}</div>
+        <div class="set-row"><span>顯示方式</span>${s('stamp.format', [['datetime', '日期＋時間（一起）'], ['split', '日期、時間分開'], ['date', '只有日期'], ['time', '只有時間']])}</div>
+        <div class="set-row"><span>位置<small>分開顯示時是日期的位置</small></span>${s('stamp.pos', POS.map(p => [p.v, p.l]))}</div>
+        <div class="set-row"><span>時間位置<small>分開顯示時使用</small></span>${s('stamp.timePos', POS.map(p => [p.v, p.l]))}</div>
+        <div class="set-row"><span>日期時間字體大小</span>${s('stamp.size', SIZES.map(p => [String(p.v), p.l]))}</div>
+        <div class="set-row"><span>心情小語字體大小</span>${s('moodSize', SIZES.map(p => [String(p.v), p.l]))}</div>
       </div>
       <div class="card" style="--c:var(--blue)"><h3><i></i>VLOG 自動剪輯</h3>
         <div class="set-row"><span>影片比例</span>${s('vlog.ratio', [['9:16', '9:16 直式'], ['16:9', '16:9 橫式'], ['1:1', '1:1 方形'], ['4:3', '4:3'], ['3:4', '3:4']])}</div>
@@ -2248,7 +2360,7 @@ function renderSettings() {
     const evt = el.tagName === 'INPUT' && el.type !== 'checkbox' ? 'change' : 'change';
     el.addEventListener(evt, () => {
       let nv = el.type === 'checkbox' ? el.checked : el.value;
-      if (['vlog.photoSec', 'vlog.maxClipSec'].includes(p)) nv = +nv;
+      if (['vlog.photoSec', 'vlog.maxClipSec', 'stamp.size', 'moodSize'].includes(p)) nv = +nv;
       const ks = p.split('.'), last = ks.pop();
       ks.reduce((a, k) => a[k], settings)[last] = nv;
       saveSettings(); toast('已儲存');
@@ -2256,6 +2368,7 @@ function renderSettings() {
       if (p === 'capture.duration') Cam.setDefaultDur(nv);
       if (p === 'capture.timer') Cam.setDefaultTimer(nv);
       if (p === 'theme') applyTheme();
+      if (p === 'stamp.format' && nv === 'split' && settings.stamp.pos === settings.stamp.timePos) { settings.stamp.pos = flipH(settings.stamp.pos); saveSettings(); renderSettings(); }
       if (p === 'profile.name') paintAvatar($('#s-avatar'));
     });
   });
@@ -2275,14 +2388,15 @@ function renderSettings() {
 async function exportBackup() {
   showBusy('正在打包備份…');
   try {
-    const media = {};
+    const media = {}; let missing = 0;
+    if (records.some(r => cloudOnly[r.id]) && !gHasToken()) { try { await gToken(); } catch (e) { } }   // 在雲端的影片要先登入才能放進備份
     for (const r of records) {
-      const b = await IDB.get('media', r.id).catch(() => null);
-      if (b) media[r.id] = await blobToDataURL(b);
+      const b = await mediaBlob(r.id).catch(() => null);
+      if (b) media[r.id] = await blobToDataURL(b); else missing++;
     }
     const data = { app: 'salog', version: 1, exportedAt: new Date().toISOString(), settings, records, orders, media };
     downloadBlob(new Blob([JSON.stringify(data)], { type: 'application/json' }), `salog-backup-${today().replaceAll('-', '')}.json`);
-    toast(`已匯出 ${records.length} 筆紀錄`);
+    toast(missing ? `已匯出 ${records.length} 筆紀錄，但有 ${missing} 支影像沒有包含在內（在雲端或找不到）` : `已匯出 ${records.length} 筆紀錄`);
   } catch (e) { console.error(e); toast('匯出失敗：' + e.message); }
   hideBusy();
 }
@@ -2293,7 +2407,8 @@ async function importBackup(file) {
   if (!await confirmBox(`備份內有 ${data.records.length} 筆紀錄。\n匯入後會與目前資料合併（相同紀錄以備份為準），並套用備份中的設定。`, '匯入')) return;
   showBusy('正在匯入…');
   try {
-    for (const [id, d] of Object.entries(data.media || {})) await IDB.put('media', id, await dataURLToBlob(d));
+    for (const [id, d] of Object.entries(data.media || {})) { await IDB.put('media', id, await dataURLToBlob(d)); delete cloudOnly[id]; }
+    LS.set(K.cloud, cloudOnly);
     const map = new Map(records.map(r => [r.id, r]));
     data.records.forEach(r => map.set(r.id, r));
     records = [...map.values()]; saveRecords();
@@ -2308,7 +2423,7 @@ async function clearAll() {
   if (!await confirmBox('最後確認：清除後無法復原。', '全部清除', true)) return;
   Object.values(K).forEach(k => localStorage.removeItem(k));
   try { await IDB.clear('media'); await IDB.clear('vlogs'); } catch (e) { }
-  settings = deepMerge(DEFAULTS, {}); records = []; orders = {}; vlogIndex = {}; deleted = {}; G.token = '';
+  settings = deepMerge(DEFAULTS, {}); records = []; orders = {}; vlogIndex = {}; deleted = {}; cloudOnly = {}; G.token = ''; G.cache.clear();
   Object.assign(Cam.live.beauty, settings.beauty); Cam.setDefaultDur(settings.capture.duration); Cam.setDefaultTimer(settings.capture.timer); applyTheme(); Cam.applyLayout();
   toast('已清除所有資料'); refreshViews();
 }
@@ -2336,6 +2451,7 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden) Cam.stop(); else Cam.start();
 });
 if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => { });
+if (settings.google) gLoad().catch(() => { });   // 先把 Google 登入元件載好
 Cam.syncUI();
 Cam.start();
 </script>
