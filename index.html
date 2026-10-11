@@ -420,12 +420,13 @@ const today = () => fmtDate(new Date());
 const baseMime = m => (m || '').split(';')[0];
 
 /* ---------------- storage ---------------- */
-const K = { rec: 'salog.records', set: 'salog.settings', ord: 'salog.orders', vlog: 'salog.vlogs' };
+const K = { rec: 'salog.records', set: 'salog.settings', ord: 'salog.orders', vlog: 'salog.vlogs', del: 'salog.deleted' };
 const LS = {
   get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { toast('瀏覽器儲存空間不足，請先匯出備份或刪除部分紀錄'); return false; } }
 };
 const DEFAULTS = {
+  google: null,
   profile: { name: '', avatar: '' },
   theme: 'light',
   capture: { duration: '3', timer: '0', ratio: '16:9', mirror: true, audio: true },
@@ -446,8 +447,9 @@ if (settings.capture.duration === 'tl') settings.capture.duration = 'tl5';   // 
 let records = LS.get(K.rec, []);
 let orders = LS.get(K.ord, {});
 let vlogIndex = LS.get(K.vlog, {});
-const saveSettings = () => LS.set(K.set, settings);
-const saveRecords = () => LS.set(K.rec, records);
+let deleted = LS.get(K.del, {});   // 刪除過的紀錄（id → 時間），同步時用來通知雲端和其他裝置
+const saveSettings = () => { const ok = LS.set(K.set, settings); gQueue(); return ok; };
+const saveRecords = () => { const ok = LS.set(K.rec, records); gQueue(); return ok; };
 const saveOrders = () => LS.set(K.ord, orders);
 const saveVlogIndex = () => LS.set(K.vlog, vlogIndex);
 const getRec = id => records.find(r => r.id === id);
@@ -497,6 +499,7 @@ const IDB = (() => {
     get: (s, k) => tx(s, 'readonly', st => st.get(k)),
     put: (s, k, v) => tx(s, 'readwrite', st => st.put(v, k)),
     del: (s, k) => tx(s, 'readwrite', st => st.delete(k)),
+    keys: s => tx(s, 'readonly', st => st.getAllKeys()),
     clear: s => tx(s, 'readwrite', st => st.clear())
   };
 })();
@@ -1363,6 +1366,7 @@ async function openEditor(id) {
 }
 async function deleteRecord(id) {
   try { await IDB.del('media', id); } catch (e) { }
+  deleted[id] = Date.now(); LS.set(K.del, deleted);
   records = records.filter(r => r.id !== id); saveRecords();
   for (const d in orders) orders[d] = orders[d].filter(x => x !== id);
   saveOrders();
@@ -1777,11 +1781,11 @@ function openVlogEditor(date) {
   });
   body.addEventListener('change', e => {
     const inc = e.target.dataset && e.target.dataset.inc;
-    if (inc) { const r = getRec(inc); r.inVlog = e.target.checked; saveRecords(); renderList(); refreshViews(); }
+    if (inc) { const r = getRec(inc); r.inVlog = e.target.checked; r.updatedAt = Date.now(); saveRecords(); renderList(); refreshViews(); }
     const sh = e.target.dataset && e.target.dataset.shift;
     if (sh) {
       const r = getRec(sh), v = e.target.value;
-      r.vlogDate = v === r.date ? undefined : v;
+      r.vlogDate = v === r.date ? undefined : v; r.updatedAt = Date.now();
       saveRecords(); order = getOrder(date); renderList(); refreshViews();
       if (vdate(r) !== date) toast(`已移到 ${dotDate(vdate(r))} 的 VLOG`);
     }
@@ -1988,6 +1992,179 @@ async function renderVlog({ date, ids, recs, size, opt, canvas, onProgress, isCa
 }
 
 /* =========================================================
+   Google 帳號：登入後把日誌備份到自己雲端硬碟的「應用程式資料」夾
+   （只有這個網頁讀得到，不會出現在雲端硬碟的檔案列表裡）
+   ========================================================= */
+const G = {
+  clientId: '913254491967-797j0f2jqlfq343oef3470nk7sc2eatd.apps.googleusercontent.com',
+  drive: 'https://www.googleapis.com/auth/drive.appdata',
+  token: '', exp: 0, syncing: false, timer: 0,
+  api: 'https://www.googleapis.com/drive/v3', up: 'https://www.googleapis.com/upload/drive/v3'
+};
+function gLoad() {
+  return new Promise((res, rej) => {
+    if (window.google && google.accounts && google.accounts.oauth2) return res();
+    let el = document.getElementById('gsi');
+    if (!el) { el = document.createElement('script'); el.id = 'gsi'; el.src = 'https://accounts.google.com/gsi/client'; document.head.appendChild(el); }
+    el.addEventListener('load', () => res());
+    el.addEventListener('error', () => { el.remove(); rej(new Error('無法載入 Google 登入，請確認網路')); });
+  });
+}
+const gHasToken = () => !!G.token && Date.now() < G.exp - 60000;
+// 取得存取權杖；有效期約一小時，過期後要由使用者點一下才能再拿
+async function gToken() {
+  if (gHasToken()) return G.token;
+  await gLoad();
+  return new Promise((res, rej) => {
+    const tc = google.accounts.oauth2.initTokenClient({
+      client_id: G.clientId,
+      scope: `${G.drive} https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email`,
+      callback: r => {
+        if (r.error) return rej(new Error(r.error === 'access_denied' ? '已取消登入' : '登入失敗：' + r.error));
+        if (!google.accounts.oauth2.hasGrantedAllScopes(r, G.drive)) return rej(new Error('請在登入畫面勾選允許存取應用程式資料，才能備份'));
+        G.token = r.access_token; G.exp = Date.now() + (+r.expires_in || 3600) * 1000;
+        res(G.token);
+      },
+      error_callback: e => rej(new Error(e && e.type === 'popup_closed' ? '已取消登入' : e && e.type === 'popup_failed_to_open' ? '瀏覽器擋住了登入視窗，請允許彈出式視窗後再試' : '登入失敗'))
+    });
+    const g = settings.google;
+    tc.requestAccessToken(g && g.email ? { prompt: '', login_hint: g.email } : {});
+  });
+}
+async function gFetch(url, opt = {}) {
+  const r = await fetch(url, { ...opt, headers: { ...(opt.headers || {}), Authorization: 'Bearer ' + G.token } });
+  if (r.status === 401) { G.token = ''; throw new Error('登入已過期，請再按一次同步'); }
+  if (!r.ok) throw new Error(r.status === 403 ? 'Google 拒絕存取（403），請確認已啟用 Google Drive API' : 'Google 雲端硬碟錯誤 ' + r.status);
+  return r;
+}
+async function gList() {
+  const out = []; let page = '';
+  do {
+    const j = await (await gFetch(`${G.api}/files?spaces=appDataFolder&pageSize=1000&fields=nextPageToken,files(id,name)${page ? '&pageToken=' + encodeURIComponent(page) : ''}`)).json();
+    out.push(...(j.files || [])); page = j.nextPageToken || '';
+  } while (page);
+  return out;
+}
+async function gCreate(name, blob) {
+  const b = 'salog' + uid(), meta = { name, parents: ['appDataFolder'], mimeType: baseMime(blob.type) || 'application/octet-stream' };
+  if (blob.size > 4e6) {
+    // 大檔案（影片）用可續傳的方式上傳；拿不到上傳位址時退回一般上傳
+    let loc = '';
+    try {
+      const r = await gFetch(`${G.up}/files?uploadType=resumable`, { method: 'POST', headers: { 'Content-Type': 'application/json; charset=UTF-8', 'X-Upload-Content-Type': meta.mimeType }, body: JSON.stringify(meta) });
+      loc = r.headers.get('Location') || '';
+    } catch (e) { if (!G.token) throw e; }
+    if (loc) return gFetch(loc, { method: 'PUT', body: blob });
+  }
+  const body = new Blob([`--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(meta)}\r\n--${b}\r\nContent-Type: ${meta.mimeType}\r\n\r\n`, blob, `\r\n--${b}--`]);
+  return gFetch(`${G.up}/files?uploadType=multipart&fields=id`, { method: 'POST', headers: { 'Content-Type': 'multipart/related; boundary=' + b }, body });
+}
+const gUpdate = (id, blob) => gFetch(`${G.up}/files/${id}?uploadType=media`, { method: 'PATCH', headers: { 'Content-Type': baseMime(blob.type) || 'application/octet-stream' }, body: blob });
+
+/* 同步：雙向合併。同一筆以較新修改的為準；刪除過的不會再被另一台裝置帶回來 */
+async function gSync(silent) {
+  if (G.syncing || !settings.google) return;
+  G.syncing = true; clearTimeout(G.timer);
+  const say = t => { if (!silent) showBusy(t); gStatus(t); };
+  try {
+    if (!gHasToken()) { if (silent) return; await gToken(); }
+    say('同步中…讀取雲端資料');
+    const names = new Map((await gList()).map(f => [f.name, f.id]));
+    let remote = null;
+    if (names.has('salog.json')) { try { remote = await (await gFetch(`${G.api}/files/${names.get('salog.json')}?alt=media`)).json(); } catch (e) { if (!/JSON/i.test(String(e))) throw e; } }
+    const fresh = !records.length && !Object.keys(deleted).length;   // 這台裝置還是空的
+    deleted = { ...((remote && remote.deleted) || {}), ...deleted };
+    const map = new Map(((remote && remote.records) || []).map(r => [r.id, r]));
+    for (const r of records) { const o = map.get(r.id); if (!o || (r.updatedAt || 0) >= (o.updatedAt || 0)) map.set(r.id, r); }
+    Object.keys(deleted).forEach(id => map.delete(id));
+    records = [...map.values()];
+    orders = { ...((remote && remote.orders) || {}), ...orders };
+    if (fresh && remote && remote.settings) {
+      const g = settings.google;
+      settings = deepMerge(DEFAULTS, remote.settings); settings.google = g;
+      Object.assign(Cam.live.beauty, settings.beauty); Cam.setDefaultDur(settings.capture.duration); Cam.setDefaultTimer(settings.capture.timer); applyTheme(); Cam.applyLayout();
+    }
+    LS.set(K.rec, records); LS.set(K.ord, orders); LS.set(K.del, deleted); LS.set(K.set, settings);
+    // 影像檔：雲端有、這裡沒有的抓下來；這裡有、雲端沒有的傳上去
+    const have = new Set(await IDB.keys('media'));
+    const down = records.filter(r => !have.has(r.id) && names.has('media-' + r.id));
+    const up = records.filter(r => have.has(r.id) && !names.has('media-' + r.id));
+    let i = 0;
+    for (const r of down) {
+      say(`同步中…下載影像 ${++i}／${down.length}`);
+      const buf = await (await gFetch(`${G.api}/files/${names.get('media-' + r.id)}?alt=media`)).blob();
+      await IDB.put('media', r.id, new Blob([buf], { type: r.mime || buf.type }));
+    }
+    i = 0;
+    for (const r of up) {
+      say(`同步中…上傳影像 ${++i}／${up.length}`);
+      const blob = await IDB.get('media', r.id);
+      if (blob) await gCreate('media-' + r.id, blob);
+    }
+    for (const id of Object.keys(deleted)) if (names.has('media-' + id)) await gFetch(`${G.api}/files/${names.get('media-' + id)}`, { method: 'DELETE' });
+    say('同步中…更新紀錄');
+    const { google: _g, ...cloudSettings } = settings;
+    const index = new Blob([JSON.stringify({ app: 'salog', version: 1, syncedAt: new Date().toISOString(), settings: cloudSettings, records, orders, deleted })], { type: 'application/json' });
+    if (names.has('salog.json')) await gUpdate(names.get('salog.json'), index); else await gCreate('salog.json', index);
+    settings.google.syncedAt = Date.now(); LS.set(K.set, settings);
+    if (!silent) toast(`同步完成：上傳 ${up.length}、下載 ${down.length}`);
+  } catch (e) {
+    console.error(e);
+    if (!silent) toast('同步沒有完成：' + e.message);
+  } finally {
+    G.syncing = false; if (!silent) hideBusy();
+    refreshViews();
+  }
+}
+function gStatus(t) { const el = $('#g-status'); if (el) el.textContent = t; }
+// 有新增或修改時，如果登入還有效就在背景自動同步
+function gQueue() {
+  if (!settings.google || G.syncing) return;
+  clearTimeout(G.timer);
+  G.timer = setTimeout(() => { if (gHasToken() && !Cam.isBusy()) gSync(true); }, 4000);
+}
+async function gSignIn() {
+  try {
+    G.token = '';
+    await gToken();
+    const u = await (await gFetch('https://www.googleapis.com/oauth2/v3/userinfo')).json();
+    const old = settings.google;
+    if (old && old.sub && old.sub !== u.sub && records.length && !await confirmBox(`這支裝置的日誌目前綁定 ${old.email || old.name}。\n改用 ${u.email || u.name} 會把這裡的日誌合併到新帳號，確定嗎？`, '改用新帳號')) { G.token = ''; return; }
+    settings.google = { sub: u.sub, name: u.name || '', email: u.email || '', picture: u.picture || '', syncedAt: old && old.sub === u.sub ? old.syncedAt : 0 };
+    // 名稱和頭貼先帶入 Google 的，之後仍可在「個人資料」修改
+    if (!settings.profile.name && u.name) settings.profile.name = u.name;
+    if (!settings.profile.avatar && u.picture) {
+      try { settings.profile.avatar = await blobToDataURL(await (await fetch(u.picture)).blob()); } catch (e) { settings.profile.avatar = u.picture; }
+    }
+    saveSettings(); refreshViews();
+    await gSync(false);
+  } catch (e) { console.error(e); toast(e.message || '登入失敗'); }
+}
+async function gSignOut() {
+  if (!await confirmBox('登出後，這支裝置上的日誌和雲端的備份都會保留，只是不再自動同步。', '登出')) return;
+  try { if (G.token && window.google) google.accounts.oauth2.revoke(G.token, () => { }); } catch (e) { }
+  G.token = ''; G.exp = 0; clearTimeout(G.timer);
+  settings.google = null; saveSettings(); refreshViews(); toast('已登出');
+}
+function gCardHTML() {
+  const g = settings.google;
+  if (!g) return `
+        <p class="sub" style="margin-bottom:12px;line-height:1.7">登入後，日誌會備份到你自己的 Google 雲端硬碟。換手機時登入同一個帳號，就能把日誌和影像拿回來。</p>
+        <button class="btn primary sm" id="g-in">使用 Google 登入</button>`;
+  const when = g.syncedAt ? `上次同步：${dotDate(fmtDate(new Date(g.syncedAt)))} ${fmtTime(new Date(g.syncedAt)).slice(0, 5)}` : '還沒有同步過';
+  return `
+        <div class="set-row"><span class="row gap" style="min-width:0"><span class="avatar" style="${g.picture ? `background-image:url(${esc(g.picture)})` : ''}">${g.picture ? '' : esc([...(g.name || 'G')][0])}</span><span style="min-width:0;overflow:hidden;text-overflow:ellipsis">${esc(g.name)}<small>${esc(g.email)}</small></span></span></div>
+        <div class="set-row"><span>備份狀態<small id="g-status">${when}${gHasToken() ? '' : '（需要再按一次同步來確認登入）'}</small></span></div>
+        <div class="row gap wrap" style="margin-top:12px"><button class="btn primary sm" id="g-sync">立即同步</button><button class="btn ghost sm" id="g-out">登出</button></div>`;
+}
+function gBind() {
+  const a = $('#g-in'); if (a) a.onclick = gSignIn;
+  const b = $('#g-sync'); if (b) b.onclick = () => gSync(false);
+  const c = $('#g-out'); if (c) c.onclick = gSignOut;
+  gLoad().catch(() => { });   // 先把登入元件載好，按下按鈕時才不會被擋彈出視窗
+}
+
+/* =========================================================
    設定
    ========================================================= */
 function renderSettings() {
@@ -2030,6 +2207,8 @@ function renderSettings() {
         <div class="set-row"><span>顯示心情小語</span>${sw('vlog.showMood')}</div>
         <div class="set-row"><span>保留影片原音</span>${sw('vlog.keepAudio')}</div>
       </div>
+      <div class="card" style="--c:var(--blue)"><h3><i></i>Google 帳號</h3>${gCardHTML()}
+      </div>
       <div class="card" style="--c:var(--medium)"><h3><i></i>資料與備份</h3>
         <p class="sub" style="margin-bottom:10px;line-height:1.7">換手機或清除瀏覽器資料前，請先匯出備份。備份檔包含所有紀錄、照片、影片與設定（已生成的 VLOG 可隨時重新製作，不放進備份以節省空間）。</p>
         <div class="set-row"><span>目前使用空間</span><span class="muted" id="s-storage">…</span></div>
@@ -2060,6 +2239,7 @@ function renderSettings() {
   });
   $$('[data-go]', root).forEach(b => b.onclick = () => go(b.dataset.go));
   $('#s-beauty-reset').onclick = () => { settings.beauty = { slim: 0, eyes: 0, tone: 0 }; Object.assign(Cam.live.beauty, settings.beauty); saveSettings(); Cam.syncUI(); renderSettings(); toast('美顏已重設'); };
+  gBind();
   paintAvatar($('#s-avatar'));
   $('#s-avatar-pick').onclick = pickAvatar;
   const ad = $('#s-avatar-del'); if (ad) ad.onclick = () => { settings.profile.avatar = ''; saveSettings(); renderSettings(); toast('已移除頭貼'); };
@@ -2102,11 +2282,11 @@ async function importBackup(file) {
   hideBusy(); refreshViews();
 }
 async function clearAll() {
-  if (!await confirmBox('確定要清除所有紀錄、照片、影片與設定嗎？\n建議先匯出備份。', '下一步', true)) return;
+  if (!await confirmBox('確定要清除這支裝置上所有紀錄、照片、影片與設定嗎？\n（Google 雲端硬碟裡的備份不會被刪除。）建議先匯出備份。', '下一步', true)) return;
   if (!await confirmBox('最後確認：清除後無法復原。', '全部清除', true)) return;
   Object.values(K).forEach(k => localStorage.removeItem(k));
   try { await IDB.clear('media'); await IDB.clear('vlogs'); } catch (e) { }
-  settings = deepMerge(DEFAULTS, {}); records = []; orders = {}; vlogIndex = {};
+  settings = deepMerge(DEFAULTS, {}); records = []; orders = {}; vlogIndex = {}; deleted = {}; G.token = '';
   Object.assign(Cam.live.beauty, settings.beauty); Cam.setDefaultDur(settings.capture.duration); Cam.setDefaultTimer(settings.capture.timer); applyTheme(); Cam.applyLayout();
   toast('已清除所有資料'); refreshViews();
 }
