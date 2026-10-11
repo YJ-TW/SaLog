@@ -1638,7 +1638,9 @@ async function openDownload(id) {
     <div class="dl-opts">
       <div class="set-row"><span>包含日期<small>${esc(stampText(r))}</small></span><label class="switch"><input type="checkbox" name="d" ${r.stamp && r.stamp.show ? 'checked' : ''}><span></span></label></div>
       <div class="set-row"><span>包含心情小語<small>${r.mood ? esc(r.mood) : '這支影像還沒有心情小語'}</small></span><label class="switch"><input type="checkbox" name="m" ${r.mood ? 'checked' : 'disabled'}><span></span></label></div>
-      ${isVideo ? '<p class="sub" style="margin-top:8px;line-height:1.6">影片要印上文字時需要重新錄製一次，花的時間大約等於影片長度。</p>' : ''}
+      <div class="set-row"><span>為 Instagram 補黑邊<small>橫式影像放進直式或方形畫面，上傳時就不會被裁到</small></span><label class="switch"><input type="checkbox" name="ig" ${(r.w || 0) > (r.h || 0) ? 'checked' : ''}><span></span></label></div>
+      <div class="set-row" data-igrow><span>Instagram 畫面比例</span><select class="input" name="igr"><option value="9:16">9:16 Reels／限時動態</option><option value="4:5">4:5 貼文</option><option value="1:1">1:1 方形</option></select></div>
+      ${isVideo ? '<p class="sub" style="margin-top:8px;line-height:1.6">影片要印上文字或補黑邊時需要重新錄製一次，花的時間大約等於影片長度。</p>' : ''}
     </div>
     <div class="render" hidden><canvas></canvas><div class="prog"><div class="bar"><i></i></div><span class="pct">0%</span></div><p class="sub dl-note">處理中，請保持這個畫面開啟。</p></div>
     <div class="row end actions"><button class="btn ghost" data-close>取消</button>${canSh ? '<button class="btn blue" data-act="share">分享／存到相簿</button>' : ''}<button class="btn primary" data-act="dl">下載</button></div>`);
@@ -1646,16 +1648,21 @@ async function openDownload(id) {
   m.addEventListener('close', () => { cancelled = true; });
   const btns = () => $$('[data-act]', m);
   // 回傳 { blob, slow }；slow 表示重新錄製過，需要再按一次才能下載（瀏覽器規定要由點擊觸發）
-  async function build(incD, incM) {
-    if (!incD && !incM) return { blob };
+  const IGP = { '9:16': [1080, 1920], '4:5': [1080, 1350], '1:1': [1080, 1080] }, IGV = { '9:16': [720, 1280], '4:5': [864, 1080], '1:1': [1080, 1080] };
+  async function build(incD, incM, ig, igr) {
+    if (!incD && !incM && !ig) return { blob };
     const rr = { ...r, stamp: { pos: 'br', text: '', ...(r.stamp || {}), show: incD } };
     const url = URL.createObjectURL(blob);
     try {
       try { await Promise.race([document.fonts.load('500 40px "Noto Sans TC"'), sleep(2500)]); } catch (e) { }
       if (!isVideo) {
         const img = await loadImg(url), c = document.createElement('canvas');
-        c.width = img.naturalWidth; c.height = img.naturalHeight;
-        const x = c.getContext('2d'); x.drawImage(img, 0, 0);
+        const x = c.getContext('2d');
+        if (ig) {   // 完整放進 Instagram 的畫面比例，空白處是黑色
+          [c.width, c.height] = IGP[igr] || IGP['9:16']; x.fillStyle = '#000'; x.fillRect(0, 0, c.width, c.height);
+          const k = Math.min(c.width / img.naturalWidth, c.height / img.naturalHeight), w = img.naturalWidth * k, h = img.naturalHeight * k;
+          x.drawImage(img, (c.width - w) / 2, (c.height - h) / 2, w, h);
+        } else { c.width = img.naturalWidth; c.height = img.naturalHeight; x.drawImage(img, 0, 0); }
         if (incD) drawStamps(x, rr, c.width, c.height);
         if (incM) drawMood(x, r.mood, c.width, c.height, 1, r.moodPos || 'b', r.moodSize || settings.moodSize || 1);
         return { blob: await new Promise(res => c.toBlob(res, 'image/jpeg', 0.92)) };
@@ -1664,12 +1671,13 @@ async function openDownload(id) {
       const v = await loadVideo(url);
       let W = v.videoWidth || r.w || 720, H = v.videoHeight || r.h || 1280;
       const k = Math.min(1, 1920 / Math.max(W, H)); W = Math.round(W * k / 2) * 2; H = Math.round(H * k / 2) * 2;
+      if (ig) [W, H] = IGV[igr] || IGV['9:16'];
       v.removeAttribute('src'); v.load();
       $('.dl-opts', m).hidden = true; $('.render', m).hidden = false;
       const bar = $('.bar i', m), pct = $('.pct', m);
       const res = await renderVlog({
         date: r.date, recs: [rr], size: [W, H], canvas: $('canvas', m), isCancelled: () => cancelled,
-        opt: { photoSec: 3, maxClipSec: 1e9, showMood: incM, keepAudio: true, fit: 'cover', plain: true },
+        opt: { photoSec: 3, maxClipSec: 1e9, showMood: incM, keepAudio: true, fit: ig ? 'contain' : 'cover', plain: true },
         onProgress: p => { bar.style.width = (p * 100).toFixed(1) + '%'; pct.textContent = Math.floor(p * 100) + '%'; }
       });
       return res ? { blob: res.blob, slow: true } : null;
@@ -1677,12 +1685,12 @@ async function openDownload(id) {
   }
   async function run(share) {
     if (working) return;
-    const incD = $('[name=d]', m).checked, incM = $('[name=m]', m).checked && !!r.mood, key = incD + '|' + incM;
+    const incD = $('[name=d]', m).checked, incM = $('[name=m]', m).checked && !!r.mood, ig = $('[name=ig]', m).checked, igr = $('[name=igr]', m).value, key = [incD, incM, ig, ig ? igr : ''].join('|');
     let out = cache && cache.key === key ? cache : null;
     if (!out) {
       working = true; btns().forEach(b => b.disabled = true);
       let res = null;
-      try { res = await build(incD, incM); } catch (e) { console.error(e); toast('處理失敗：' + e.message); }
+      try { res = await build(incD, incM, ig, igr); } catch (e) { console.error(e); toast('處理失敗：' + e.message); }
       working = false;
       if (!m.isConnected) return;
       btns().forEach(b => b.disabled = false);
@@ -1697,6 +1705,8 @@ async function openDownload(id) {
     } else { await downloadBlob(out.blob, name); toast('已開始下載'); }
     m.close();
   }
+  const igToggle = () => { $('[data-igrow]', m).hidden = !$('[name=ig]', m).checked; };
+  $('[name=ig]', m).onchange = igToggle; igToggle();
   $('[data-act=dl]', m).onclick = () => run(false);
   const sh = $('[data-act=share]', m); if (sh) sh.onclick = () => run(true);
 }
@@ -1751,7 +1761,7 @@ $('#j-list').onclick = e => {
 /* =========================================================
    VLOG：自動剪輯
    ========================================================= */
-const OUT = { '9:16': [720, 1280], '16:9': [1280, 720], '1:1': [1080, 1080], '4:3': [1024, 768], '3:4': [768, 1024] };
+const OUT = { '9:16': [720, 1280], '4:5': [864, 1080], '16:9': [1280, 720], '1:1': [1080, 1080], '4:3': [1024, 768], '3:4': [768, 1024] };
 function getOrder(date) {
   const ids = records.filter(r => vdate(r) === date).sort(byTime).map(r => r.id);
   const saved = (orders[date] || []).filter(id => ids.includes(id));
@@ -1780,10 +1790,11 @@ function openVlogEditor(date) {
   function editView() {
     body.innerHTML = `
       <div class="vopts">
-        <label class="f"><span class="f-label">影片比例</span>${sel('ratio', [['9:16', '9:16 直式'], ['16:9', '16:9 橫式'], ['1:1', '1:1 方形'], ['4:3', '4:3'], ['3:4', '3:4']])}</label>
+        <label class="f"><span class="f-label">影片比例</span>${sel('ratio', [['9:16', '9:16 直式（IG Reels／限時動態）'], ['4:5', '4:5（IG 貼文）'], ['16:9', '16:9 橫式'], ['1:1', '1:1 方形'], ['4:3', '4:3'], ['3:4', '3:4']])}</label>
         <label class="f"><span class="f-label">照片停留</span>${sel('photoSec', [[2, '2 秒'], [3, '3 秒'], [4, '4 秒'], [5, '5 秒']])}</label>
         <label class="f"><span class="f-label">影片片段上限</span>${sel('maxClipSec', [[5, '5 秒'], [10, '10 秒'], [15, '15 秒'], [30, '30 秒'], [60, '60 秒']])}</label>
         <label class="f"><span class="f-label">畫面填滿</span>${sel('fit', [['blur', '完整＋黑底'], ['cover', '裁切填滿']])}</label>
+        <p class="hint full" style="line-height:1.6">上傳 Instagram Reels 或限時動態請選 9:16，畫面填滿選「完整＋黑底」：橫式的片段會完整保留、上下留黑邊，不會被裁到。橫式 16:9 直接上傳 Reels 會被放大裁切。</p>
         <div class="checks full">
           <label><span class="switch sm"><input type="checkbox" data-o="showMood" ${opt.showMood ? 'checked' : ''}><span></span></span>顯示心情小語</label>
           <label><span class="switch sm"><input type="checkbox" data-o="keepAudio" ${opt.keepAudio ? 'checked' : ''}><span></span></span>保留影片原音</label>
@@ -2334,7 +2345,7 @@ function renderSettings() {
         <div class="set-row"><span>心情小語字體大小</span>${s('moodSize', SIZES.map(p => [String(p.v), p.l]))}</div>
       </div>
       <div class="card" style="--c:var(--blue)"><h3><i></i>VLOG 自動剪輯</h3>
-        <div class="set-row"><span>影片比例</span>${s('vlog.ratio', [['9:16', '9:16 直式'], ['16:9', '16:9 橫式'], ['1:1', '1:1 方形'], ['4:3', '4:3'], ['3:4', '3:4']])}</div>
+        <div class="set-row"><span>影片比例</span>${s('vlog.ratio', [['9:16', '9:16 直式（IG Reels／限時動態）'], ['4:5', '4:5（IG 貼文）'], ['16:9', '16:9 橫式'], ['1:1', '1:1 方形'], ['4:3', '4:3'], ['3:4', '3:4']])}</div>
         <div class="set-row"><span>照片停留秒數</span>${s('vlog.photoSec', [['2', '2 秒'], ['3', '3 秒'], ['4', '4 秒'], ['5', '5 秒']])}</div>
         <div class="set-row"><span>影片片段上限</span>${s('vlog.maxClipSec', [['5', '5 秒'], ['10', '10 秒'], ['15', '15 秒'], ['30', '30 秒'], ['60', '60 秒']])}</div>
         <div class="set-row"><span>畫面填滿方式</span>${s('vlog.fit', [['blur', '完整＋黑底'], ['cover', '裁切填滿']])}</div>
