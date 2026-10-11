@@ -213,10 +213,10 @@ input[type=range]{accent-color:var(--pink);width:100%}
 .media-in .stamp-ov{font-size:clamp(10px,3cqi,16px)}
 .media-in .stamp-ov.tl{top:12px;left:12px}.media-in .stamp-ov.tr{top:12px;right:12px}
 .media-in .stamp-ov.bl{bottom:12px;left:12px}.media-in .stamp-ov.br{bottom:12px;right:12px}
-.media-in video ~ .stamp-ov.bl,.media-in video ~ .stamp-ov.br{bottom:64px}
+.media-in .stamp-ov{pointer-events:none}
 .mood-ov{position:absolute;left:8%;right:8%;text-align:center;color:#fff;font-size:clamp(11px,4.2cqi,20px);font-weight:500;line-height:1.5;text-shadow:0 1px 5px rgba(0,0,0,.5);white-space:pre-wrap;overflow-wrap:anywhere;pointer-events:none}
-.mood-ov.t{top:13%}.mood-ov.m{top:50%;transform:translateY(-50%)}.mood-ov.b{bottom:13%}
-.media-in video ~ .mood-ov.b{bottom:76px}
+.mood-ov.t{top:12px}.mood-ov.m{top:50%;transform:translateY(-50%)}.mood-ov.b{bottom:12px}
+.mood-ov.t.clr{top:calc(12px + 1.9em)}.mood-ov.b.clr{bottom:calc(12px + 1.9em)}
 .form{display:grid;gap:12px}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .stamp-box{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;display:grid;gap:10px}
@@ -1162,7 +1162,7 @@ function bindRecordForm(root, r) {
   };
   const upd = () => {
     read(); ov.className = 'stamp-ov ' + r.stamp.pos; ov.hidden = !r.stamp.show; ov.textContent = stampText(r);
-    mv.className = 'mood-ov ' + (r.moodPos || 'b'); mv.hidden = !r.mood; mv.textContent = r.mood;
+    mv.className = 'mood-ov ' + (r.moodPos || 'b') + (r.stamp.show && r.stamp.pos[0] === (r.moodPos || 'b') ? ' clr' : ''); mv.hidden = !r.mood; mv.textContent = r.mood;
   };
   root.addEventListener('input', upd); root.addEventListener('change', upd);
   $$('[data-name=stampPos] button', root).forEach(b => b.onclick = () => {
@@ -1541,13 +1541,14 @@ function wrapText(ctx, text, maxW, maxLines = 3) {
   if (lines.length > maxLines) { lines.length = maxLines; lines[maxLines - 1] = lines[maxLines - 1].slice(0, -1) + '…'; }
   return lines;
 }
-function drawMood(ctx, text, W, H, alpha, pos = 'b') {
+function drawMood(ctx, text, W, H, alpha, pos = 'b', stampPos = '') {
   const s = Math.min(W, H), fs = Math.round(s * 0.046), lh = fs * 1.5;
   ctx.save(); ctx.globalAlpha = alpha;
   ctx.font = `500 ${fs}px "Noto Sans TC", sans-serif`;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   const lines = wrapText(ctx, text, W * 0.72);
-  const edge = Math.max(H * 0.1, s * 0.16), span = (lines.length - 1) * lh;
+  // 貼齊畫面邊緣；和時間戳記同一邊時往內讓一行
+  const edge = s * 0.045 + fs / 2 + (stampPos && stampPos[0] === pos ? s * 0.034 * 1.7 : 0), span = (lines.length - 1) * lh;
   const bottom = pos === 't' ? edge + span : pos === 'm' ? H / 2 + span / 2 : H - edge;
   ctx.shadowColor = 'rgba(0,0,0,.45)'; ctx.shadowBlur = fs * 0.5;
   ctx.fillStyle = '#FFFFFF';
@@ -1594,7 +1595,7 @@ function drawSeg(ctx, sg, t, W, H, opt, date, count) {
   if (sg.kind === 'photo') drawFit(ctx, sg.img, sg.img.naturalWidth, sg.img.naturalHeight, W, H, opt.fit, 1 + 0.06 * Math.min(1, t / sg.dur));
   else if (sg.v.videoWidth) drawFit(ctx, sg.v, sg.v.videoWidth, sg.v.videoHeight, W, H, opt.fit, 1);
   if (r.stamp && r.stamp.show) drawStamp(ctx, stampText(r), r.stamp.pos || 'br', W, H);
-  if (opt.showMood && r.mood) drawMood(ctx, r.mood, W, H, Math.min(1, Math.max(0, (t - 0.3) / 0.5)) * Math.min(1, Math.max(0, (sg.dur - t) / 0.3)), r.moodPos);
+  if (opt.showMood && r.mood) drawMood(ctx, r.mood, W, H, Math.min(1, Math.max(0, (t - 0.3) / 0.5)) * Math.min(1, Math.max(0, (sg.dur - t) / 0.3)), r.moodPos || 'b', r.stamp && r.stamp.show ? r.stamp.pos || 'br' : '');
   const fin = 1 - Math.min(1, t / 0.35), fout = 1 - Math.min(1, (sg.dur - t) / 0.3);
   const f = Math.max(fin, fout);
   if (f > 0) { ctx.fillStyle = `rgba(250,243,238,${f})`; ctx.fillRect(0, 0, W, H); }
