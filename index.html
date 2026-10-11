@@ -842,6 +842,9 @@ const Cam = (() => {
     return matchMedia('(orientation: landscape)').matches;
   }
   const viewTilt = () => screenLand() ? 0 : tilt;
+  // 相機畫面要轉正的角度：前鏡頭看到的左右與後鏡頭相反，所以方向也相反
+  const isFront = () => { try { const m = stream && stream.getVideoTracks()[0].getSettings().facingMode; return m ? m === 'user' : facing === 'user'; } catch (e) { return facing === 'user'; } };
+  const srcRot = () => isFront() ? viewTilt() : -viewTilt();
   function setTilt(t) { if (t === tilt || isBusy()) return; tilt = t; applyLayout(); }
   addEventListener('devicemotion', e => {
     const g = e.accelerationIncludingGravity;
@@ -887,7 +890,7 @@ const Cam = (() => {
   const hasFeed = () => video.readyState >= 2 && video.videoWidth > 0;
   const wantFace = () => live.beauty.slim > 0 || live.beauty.eyes > 0;
   const opts = s => ({ zoom: st.zoom, mirror: facing === 'user' && settings.capture.mirror, ...live.beauty,
-    faces: wantFace() ? Face.detect(s.c, video.currentTime + ':' + viewTilt(), s.w, s.h) : null, centerWarp: Face.failed() });
+    faces: wantFace() ? Face.detect(s.c, video.currentTime + ':' + srcRot(), s.w, s.h) : null, centerWarp: Face.failed() });
   function idle() {
     const W = canvas.width, H = canvas.height;
     const g = ctx.createLinearGradient(0, 0, W, H);
@@ -900,7 +903,7 @@ const Cam = (() => {
   }
   function loop() {
     if (!running) return;
-    if (hasFeed()) { const s = FX.source(video, -viewTilt()); FX.render(ctx, s.c, s.w, s.h, canvas.width, canvas.height, opts(s)); }
+    if (hasFeed()) { const s = FX.source(video, srcRot()); FX.render(ctx, s.c, s.w, s.h, canvas.width, canvas.height, opts(s)); }
     else idle();
     raf = requestAnimationFrame(loop);
   }
