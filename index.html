@@ -243,6 +243,8 @@ input[type=range]{accent-color:var(--pink);width:100%}
 #busy{position:fixed;inset:0;z-index:70;background:var(--veil);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;font-size:14px;color:var(--medium)}
 .spin{width:34px;height:34px;border:3px solid var(--light-pink);border-top-color:var(--pink);border-radius:50%;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+.lens-btn{flex-shrink:0;height:30px;padding:0 10px;border-radius:999px;background:var(--surface);border:1px solid var(--line2);font-size:12px;font-weight:700;color:var(--medium)}
+.lens-btn.on{background:var(--pink);border-color:var(--pink);color:#fff}
 /* ---------- 倒數計時 ---------- */
 .pill-btn.sm{padding:0 11px;height:38px;font-size:12px;gap:4px}
 .pill-btn.sm span{color:var(--pink)}
@@ -322,6 +324,7 @@ input[type=range]{accent-color:var(--pink);width:100%}
     </div>
 
     <div class="zoom-row">
+      <button class="lens-btn" id="btn-wide" title="0.5x 廣角鏡頭">0.5x</button>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5M8 11h6"/></svg>
       <input type="range" id="zoom" min="1" max="4" step="0.05" value="1">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5M8 11h6M11 8v6"/></svg>
@@ -952,7 +955,9 @@ const Cam = (() => {
       return showFallback(window.isSecureContext ? '這個瀏覽器不支援相機功能。' : '相機需要在 https 網址或本機伺服器上開啟。你仍可以上傳照片與影片。');
     }
     stopTracks();
-    const v = { facingMode: { ideal: facing }, width: { ideal: 1920 }, height: { ideal: 1080 } };
+    const v = lens.id && facing === 'environment'
+      ? { deviceId: { exact: lens.id }, width: { ideal: 1920 }, height: { ideal: 1080 } }
+      : { facingMode: { ideal: facing }, width: { ideal: 1920 }, height: { ideal: 1080 } };
     let s = null;
     try { s = await navigator.mediaDevices.getUserMedia({ video: v, audio: !!settings.capture.audio }); }
     catch (e) {
@@ -965,6 +970,58 @@ const Cam = (() => {
     if (!running) { s.getTracks().forEach(t => t.stop()); return; }
     stream = s; video.srcObject = s;
     try { await video.play(); } catch (e) { }
+    if (facing === 'environment') {
+      const t = s.getVideoTracks()[0];
+      if (!lens.id && !lens.main) { try { lens.main = t.getSettings().deviceId || ''; } catch (e) { } }
+      if (lens.zoom) { try { await t.applyConstraints({ advanced: [{ zoom: lens.zoom }] }); } catch (e) { lens.zoom = 0; syncWide(); } }
+    }
+  }
+
+  /* ---- 0.5x 廣角：先試同一顆鏡頭能不能縮到 1x 以下，不行再換成手機的超廣角鏡頭 ---- */
+  const lens = { id: '', zoom: 0, main: '', idx: -1 };
+  const wideOn = () => !!(lens.id || lens.zoom);
+  function syncWide() { $('#btn-wide').classList.toggle('on', wideOn() && facing === 'environment'); }
+  async function wideOff() {
+    const hadId = !!lens.id, z = lens.zoom;
+    lens.id = ''; lens.zoom = 0; lens.idx = -1;
+    if (hadId && running) await openStream();
+    else if (z && stream) { try { await stream.getVideoTracks()[0].applyConstraints({ advanced: [{ zoom: 1 }] }); } catch (e) { } }
+    syncWide();
+  }
+  async function toggleWide() {
+    if (isBusy()) return;
+    if (facing !== 'environment') return toast('0.5x 廣角只能用在後鏡頭');
+    const track = stream && stream.getVideoTracks()[0];
+    if (!track) return noFeed();
+    if (lens.zoom) { await wideOff(); return toast('回到 1x'); }
+    if (!lens.id) {
+      let cap = {}; try { cap = track.getCapabilities ? track.getCapabilities() : {}; } catch (e) { }
+      if (cap.zoom && cap.zoom.min < 1) {
+        try {
+          await track.applyConstraints({ advanced: [{ zoom: cap.zoom.min }] });
+          lens.zoom = cap.zoom.min; setZoom(1); syncWide();
+          return toast(`廣角 ${+cap.zoom.min.toFixed(1)}x`);
+        } catch (e) { }
+      }
+    }
+    let devs = [];
+    try { devs = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'videoinput' && d.deviceId); } catch (e) { }
+    const uw = devs.find(d => /ultra|超廣角|超广角/i.test(d.label));
+    if (uw) {
+      if (lens.id) { await wideOff(); return toast('回到 1x'); }
+      lens.id = uw.deviceId; await openStream();
+      if (!stream) { lens.id = ''; await openStream(); syncWide(); return toast('無法開啟廣角鏡頭'); }
+      setZoom(1); syncWide(); return toast('0.5x 廣角鏡頭');
+    }
+    // 手機沒有標示哪一顆是廣角：在其他後鏡頭之間輪流切換
+    const others = devs.filter(d => d.deviceId !== lens.main && !/front|user|facetime|前/i.test(d.label));
+    if (!others.length) return toast('這支手機的瀏覽器沒有開放廣角鏡頭');
+    lens.idx++;
+    if (lens.idx >= others.length) { await wideOff(); return toast('回到 1x 主鏡頭'); }
+    lens.id = others[lens.idx].deviceId; await openStream();
+    if (!stream) { await wideOff(); return toast('無法開啟這顆鏡頭，已回到主鏡頭'); }
+    setZoom(1); syncWide();
+    toast(`後鏡頭 ${lens.idx + 1}／${others.length}，如果不是廣角請再按一次`);
   }
   async function start() { if (running) return; running = true; applyLayout(); loop(); await openStream(); }
   function stop() { running = false; cancelAnimationFrame(raf); cancelCount(); stopTracks(); }
@@ -1075,6 +1132,7 @@ const Cam = (() => {
   async function flip() {
     if (isBusy()) return;
     facing = facing === 'user' ? 'environment' : 'user';
+    lens.id = ''; lens.zoom = 0; lens.idx = -1; syncWide();
     if (running) await openStream();
     toast(facing === 'user' ? '前鏡頭' : '後鏡頭');
   }
@@ -1110,6 +1168,7 @@ const Cam = (() => {
   $('#btn-video').onclick = () => (tl || st.recording) ? recordVideo() : countdown(recordVideo);
   $('#btn-timer').onclick = cycleTimer;
   $('#btn-flip').onclick = flip;
+  $('#btn-wide').onclick = toggleWide;
   $('#btn-dur').onclick = cycleDur;
   $('#zoom').oninput = e => setZoom(+e.target.value);
   $('#ratio-seg').onclick = e => { const b = e.target.closest('button'); if (!b || isBusy()) return; settings.capture.ratio = b.dataset.r; saveSettings(); applyLayout(); };
