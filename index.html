@@ -246,6 +246,9 @@ input[type=range]{accent-color:var(--pink);width:100%}
 .lens-btn{flex-shrink:0;height:30px;padding:0 10px;border-radius:999px;background:var(--surface);border:1px solid var(--line2);font-size:12px;font-weight:700;color:var(--medium)}
 .lens-btn.on{background:var(--pink);border-color:var(--pink);color:#fff}
 /* ---------- 頭貼 ---------- */
+.perm-help{font-size:12.5px;color:var(--medium);line-height:1.7;padding:6px 0 2px}
+.perm-help summary{cursor:pointer;color:var(--pink);font-weight:700}
+.perm-help p{margin-top:6px}
 .avatar{width:38px;height:38px;border-radius:50%;background:var(--light-pink) center/cover no-repeat;display:inline-grid;place-items:center;color:var(--pink);font-weight:700;font-size:16px;flex-shrink:0;overflow:hidden}
 .avatar svg{width:20px;height:20px}
 .avatar.lg{width:46px;height:46px;font-size:19px}
@@ -1043,8 +1046,17 @@ const Cam = (() => {
     setZoom(1); syncWide();
     toast(`後鏡頭 ${lens.idx + 1}／${others.length}，如果不是廣角請再按一次`);
   }
-  async function start() { if (running) return; running = true; applyLayout(); loop(); await openStream(); }
-  function stop() { running = false; cancelAnimationFrame(raf); cancelCount(); stopTracks(); }
+  const hasLive = () => !!stream && stream.getVideoTracks().some(t => t.readyState === 'live');
+  async function start() {
+    if (running) return; running = true; applyLayout(); loop();
+    if (hasLive()) { stream.getTracks().forEach(t => t.enabled = true); try { await video.play(); } catch (e) { } return; }   // 只是暫停過：直接接著用
+    await openStream();
+  }
+  // hard = false：只是離開拍攝頁，先暫停；hard = true：真的關掉相機（例如切到別的 App）
+  function stop(hard = true) {
+    running = false; cancelAnimationFrame(raf); cancelCount();
+    if (hard) stopTracks(); else if (stream) stream.getTracks().forEach(t => t.enabled = false);
+  }
   const isBusy = () => st.recording || st.busy || !!cd;
 
   // ---- 倒數計時拍攝：倒數中再按一次快門就取消 ----
@@ -2164,6 +2176,18 @@ function gBind() {
   gLoad().catch(() => { });   // 先把登入元件載好，按下按鈕時才不會被擋彈出視窗
 }
 
+async function camPermBind() {
+  const el = $('#cam-perm'); if (!el) return;
+  const text = st => st === 'granted' ? '已允許' : st === 'denied' ? '已封鎖' : st === 'prompt' ? '每次詢問' : '無法判斷';
+  let p = null; try { p = await navigator.permissions.query({ name: 'camera' }); } catch (e) { }
+  const show = () => { const e = $('#cam-perm'); if (e) e.textContent = text(p && p.state); };
+  show(); if (p) p.onchange = show;
+  $('#cam-perm-ask').onclick = async () => {
+    try { const s = await navigator.mediaDevices.getUserMedia({ video: true }); s.getTracks().forEach(t => t.stop()); toast('相機已可使用'); }
+    catch (e) { toast(e && e.name === 'NotAllowedError' ? '相機被封鎖了，請照下方說明到瀏覽器設定裡允許' : '無法開啟相機'); }
+    if (!p) { const e = $('#cam-perm'); if (e) e.textContent = '無法判斷'; }
+  };
+}
 /* =========================================================
    設定
    ========================================================= */
@@ -2188,6 +2212,13 @@ function renderSettings() {
         <div class="set-row"><span>預設畫面比例</span>${s('capture.ratio', [['16:9', '16:9'], ['1:1', '1:1'], ['4:3', '4:3']])}</div>
         <div class="set-row"><span>前鏡頭鏡像</span>${sw('capture.mirror')}</div>
         <div class="set-row"><span>錄影時收音<small>變更後下次開相機生效</small></span>${sw('capture.audio')}</div>
+        <div class="set-row"><span>相機權限<small>要不要每次都詢問，由手機的瀏覽器決定</small></span><span class="row gap"><b id="cam-perm" class="muted">…</b><button class="btn soft sm" id="cam-perm-ask">要求授權</button></span></div>
+        <details class="perm-help"><summary>想讓手機記住授權？</summary>
+          <p><b>iPhone（Safari）：</b>網址列左邊的「aA」→「網站設定」→「相機」→ 選「允許」。出現「允許」而不是「詢問」，之後就不會再問。</p>
+          <p><b>Android（Chrome）：</b>網址列左邊的鎖頭或調整圖示 →「權限」→「相機」→「允許」。</p>
+          <p><b>想取消授權：</b>在同一個地方改回「詢問」或「封鎖」即可，隨時可以改。</p>
+          <p>把 Salog「加入主畫面」後從圖示開啟，通常也比較不會重複詢問。授權是瀏覽器管的，網頁本身沒辦法替你永久開啟或關閉。</p>
+        </details>
       </div>
       <div class="card" style="--c:var(--soft-pink)"><h3><i></i>美顏（已儲存的設定）</h3>
         <div class="set-row"><span>瘦臉 / 大眼</span><span class="muted">${b.slim} / ${b.eyes}</span></div>
@@ -2239,7 +2270,7 @@ function renderSettings() {
   });
   $$('[data-go]', root).forEach(b => b.onclick = () => go(b.dataset.go));
   $('#s-beauty-reset').onclick = () => { settings.beauty = { slim: 0, eyes: 0, tone: 0 }; Object.assign(Cam.live.beauty, settings.beauty); saveSettings(); Cam.syncUI(); renderSettings(); toast('美顏已重設'); };
-  gBind();
+  gBind(); camPermBind();
   paintAvatar($('#s-avatar'));
   $('#s-avatar-pick').onclick = pickAvatar;
   const ad = $('#s-avatar-del'); if (ad) ad.onclick = () => { settings.profile.avatar = ''; saveSettings(); renderSettings(); toast('已移除頭貼'); };
@@ -2300,7 +2331,7 @@ function go(page) {
   current = page;
   $$('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + page));
   $$('.tab').forEach(t => t.classList.toggle('active', t.dataset.page === page));
-  if (page === 'capture') Cam.start(); else Cam.stop();
+  if (page === 'capture') Cam.start(); else Cam.stop(false);
   if (page !== 'journal') pauseViewer(); else scheduleAuto();
   refreshViews();
 }
