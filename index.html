@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#FAF3EE">
 <title>沙漏 Salog</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Salog">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
@@ -270,7 +277,6 @@ input[type=range]{accent-color:var(--pink);width:100%}
       <div class="panel-head"><b>美顏設定</b><span class="hint">瘦臉、大眼為簡易效果（以畫面中央為準）</span></div>
       <div class="slider-row"><span>瘦臉</span><input type="range" min="0" max="100" data-b="slim"><output></output></div>
       <div class="slider-row"><span>大眼</span><input type="range" min="0" max="100" data-b="eyes"><output></output></div>
-      <div class="slider-row"><span>皮膚</span><input type="range" min="0" max="100" data-b="smooth"><output></output></div>
       <div class="slider-row"><span>膚色</span><input type="range" min="-50" max="50" data-b="tone"><output></output></div>
       <div class="row between" style="margin-top:8px">
         <span class="hint">膚色：往左白皙、往右紅潤</span>
@@ -394,7 +400,7 @@ const LS = {
 const DEFAULTS = {
   profile: { name: '', bio: '' },
   capture: { duration: '3', ratio: '16:9', orient: 'portrait', mirror: true, audio: true, tlInterval: 1 },
-  beauty: { slim: 0, eyes: 0, smooth: 0, tone: 0 },
+  beauty: { slim: 0, eyes: 0, tone: 0 },
   brightness: 0,
   stamp: { show: true, pos: 'br', format: 'datetime' },
   vlog: { ratio: '9:16', photoSec: 3, maxClipSec: 10, showMood: true, intro: true, keepAudio: true, fit: 'blur' }
@@ -635,14 +641,132 @@ function drawStamp(ctx, text, pos, W, H) {
 }
 
 /* =========================================================
-   美顏／畫面處理（Canvas 簡易效果）
+   臉部辨識（MediaPipe Face Landmarker，需要網路載入；載入失敗時退回簡易效果）
+   ========================================================= */
+const Face = (() => {
+  const VER = '0.10.14', CDN = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${VER}`;
+  const MODEL = 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task';
+  let state = 'idle', lm = null, lastT = -1, lastTs = 0, faces = [];
+  async function load() {
+    state = 'loading';
+    try {
+      const { FilesetResolver, FaceLandmarker } = await import(`${CDN}/vision_bundle.mjs`);
+      const files = await FilesetResolver.forVisionTasks(`${CDN}/wasm`);
+      const mk = delegate => FaceLandmarker.createFromOptions(files, { baseOptions: { modelAssetPath: MODEL, delegate }, runningMode: 'VIDEO', numFaces: 2 });
+      try { lm = await mk('GPU'); } catch (e) { lm = await mk('CPU'); }
+      state = 'ready';
+    } catch (e) { state = 'failed'; }
+  }
+  const mid = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+  const mix = (a, b, t) => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t });
+  // 只留下需要的點（影片像素座標）：臉的左右緣、下巴、兩眼中心與眼寬
+  function pick(p, w, h) {
+    const P = i => ({ x: p[i].x * w, y: p[i].y * h });
+    const eye = (i, j) => { const a = P(i), b = P(j); return { c: mid(a, b), w: Math.hypot(a.x - b.x, a.y - b.y) }; };
+    return { l: P(234), r: P(454), chin: P(152), e1: eye(33, 133), e2: eye(362, 263) };
+  }
+  function smooth(prev, cur) {
+    const t = 0.6, o = {};
+    for (const k of ['l', 'r', 'chin']) o[k] = mix(prev[k], cur[k], t);
+    for (const k of ['e1', 'e2']) o[k] = { c: mix(prev[k].c, cur[k].c, t), w: prev[k].w + (cur[k].w - prev[k].w) * t };
+    return o;
+  }
+  function detect(video) {
+    if (state === 'idle') load();
+    if (state !== 'ready') return null;
+    if (!video.videoWidth || video.currentTime === lastT) return faces;
+    lastT = video.currentTime;
+    try {
+      lastTs = Math.max(lastTs + 1, performance.now());
+      const res = lm.detectForVideo(video, lastTs);
+      const cur = (res.faceLandmarks || []).map(p => pick(p, video.videoWidth, video.videoHeight));
+      faces = cur.length === faces.length ? cur.map((c, i) => smooth(faces[i], c)) : cur;
+    } catch (e) { faces = []; }
+    return faces;
+  }
+  return { detect, failed: () => state === 'failed', state: () => state };
+})();
+
+/* =========================================================
+   美顏／畫面處理（Canvas 效果；瘦臉與大眼會跟著偵測到的臉）
    ========================================================= */
 const FX = (() => {
   const tmp = document.createElement('canvas'), tctx = tmp.getContext('2d');
-  const small = document.createElement('canvas'), sctx = small.getContext('2d');
-  const eye = document.createElement('canvas'), ectx = eye.getContext('2d', { willReadFrequently: true });
+  const buf = document.createElement('canvas'), bctx = buf.getContext('2d', { willReadFrequently: true });
   const filterOK = (() => { try { const c = document.createElement('canvas').getContext('2d'); c.filter = 'blur(1px)'; return c.filter === 'blur(1px)'; } catch (e) { return false; } })();
   const warp = (u, a) => u + a * Math.sin(2 * Math.PI * (u - 0.5)) / (2 * Math.PI);
+  const ss = t => t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t);
+
+  // 讀出一塊區域準備重新取樣；put() 把結果畫回去
+  function grab(ctx, x0, y0, x1, y1) {
+    const W = ctx.canvas.width, H = ctx.canvas.height;
+    x0 = Math.max(0, Math.floor(x0)); y0 = Math.max(0, Math.floor(y0)); x1 = Math.min(W, Math.ceil(x1)); y1 = Math.min(H, Math.ceil(y1));
+    const w = x1 - x0, h = y1 - y0;
+    if (w < 4 || h < 4) return null;
+    if (buf.width !== w || buf.height !== h) { buf.width = w; buf.height = h; }
+    bctx.drawImage(ctx.canvas, x0, y0, w, h, 0, 0, w, h);
+    const sp = bctx.getImageData(0, 0, w, h).data, out = bctx.createImageData(w, h);
+    out.data.set(sp);
+    return { x0, y0, w, h, sp, out, op: out.data };
+  }
+  function put(ctx, r) { bctx.putImageData(r.out, 0, 0); ctx.drawImage(buf, r.x0, r.y0); }
+  // 雙線性取樣：把來源 (fx, fy) 的顏色寫到輸出的第 i 個位元組
+  function samp(sp, op, w, h, i, fx, fy) {
+    fx = fx < 0 ? 0 : fx > w - 1.001 ? w - 1.001 : fx; fy = fy < 0 ? 0 : fy > h - 1.001 ? h - 1.001 : fy;
+    const ix = fx | 0, iy = fy | 0, ax = fx - ix, ay = fy - iy, j = (iy * w + ix) * 4, j2 = j + w * 4;
+    const w00 = (1 - ax) * (1 - ay), w10 = ax * (1 - ay), w01 = (1 - ax) * ay, w11 = ax * ay;
+    op[i] = sp[j] * w00 + sp[j + 4] * w10 + sp[j2] * w01 + sp[j2 + 4] * w11;
+    op[i + 1] = sp[j + 1] * w00 + sp[j + 5] * w10 + sp[j2 + 1] * w01 + sp[j2 + 5] * w11;
+    op[i + 2] = sp[j + 2] * w00 + sp[j + 6] * w10 + sp[j2 + 2] * w01 + sp[j2 + 6] * w11;
+  }
+
+  // 瘦臉：沿著臉的橫軸，把下半臉兩側往中線收
+  function slimFace(ctx, f, amt) {
+    const cx = (f.l.x + f.r.x) / 2, cy = (f.l.y + f.r.y) / 2;
+    let ux = f.r.x - f.l.x, uy = f.r.y - f.l.y;
+    const hw = Math.hypot(ux, uy) / 2;
+    if (hw < 12) return;
+    ux /= hw * 2; uy /= hw * 2;
+    let vx = -uy, vy = ux, fh = (f.chin.x - cx) * vx + (f.chin.y - cy) * vy;
+    if (fh < 0) { vx = -vx; vy = -vy; fh = -fh; }
+    if (fh < 12) return;
+    const s = amt * 0.11 * hw, U = 1.5, V0 = -0.1, V1 = 1.4;
+    const xs = [], ys = [];
+    for (const a of [-U, U]) for (const b of [V0, V1]) { xs.push(cx + a * hw * ux + b * fh * vx); ys.push(cy + a * hw * uy + b * fh * vy); }
+    const r = grab(ctx, Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys));
+    if (!r) return;
+    const { w, h, sp, op } = r, dux = ux / hw, dvx = vx / fh;
+    for (let y = 0; y < h; y++) {
+      const dx0 = r.x0 - cx, dy = y + r.y0 - cy;
+      let u = (dx0 * ux + dy * uy) / hw, v = (dx0 * vx + dy * vy) / fh;
+      for (let x = 0, i = y * w * 4; x < w; x++, i += 4, u += dux, v += dvx) {
+        const au = u < 0 ? -u : u;
+        if (au < 0.25 || au > U || v < V0 || v > V1) continue;
+        let d = s * (au < 0.85 ? ss((au - 0.2) / 0.65) : 1 - ss((au - 0.85) / 0.65)) * (v < 0.7 ? ss((v - V0) / 0.8) : 1 - ss((v - 0.7) / 0.7));
+        if (d < 0.2) continue;
+        if (u < 0) d = -d;
+        samp(sp, op, w, h, i, x + d * ux, y + d * uy);
+      }
+    }
+    put(ctx, r);
+  }
+  // 大眼：以眼睛為中心的平滑放大
+  function bigEye(ctx, cx, cy, R, k) {
+    if (R < 4) return;
+    const r = grab(ctx, cx - R, cy - R, cx + R, cy + R);
+    if (!r) return;
+    const { w, h, sp, op } = r, ox = cx - r.x0, oy = cy - r.y0, R2 = R * R;
+    for (let y = 0; y < h; y++) {
+      const dy = y - oy;
+      for (let x = 0, i = y * w * 4; x < w; x++, i += 4) {
+        const dx = x - ox, rr = (dx * dx + dy * dy) / R2;
+        if (rr >= 1) continue;
+        const m = 1 - k * (1 - rr) * (1 - rr);
+        samp(sp, op, w, h, i, ox + dx * m, oy + dy * m);
+      }
+    }
+    put(ctx, r);
+  }
 
   function render(ctx, src, sw, sh, W, H, o) {
     if (tmp.width !== W || tmp.height !== H) { tmp.width = W; tmp.height = H; }
@@ -650,13 +774,14 @@ const FX = (() => {
     const cw = W / scale, ch = H / scale, cx = (sw - cw) / 2, cy = (sh - ch) / 2;
     const b = 1 + (o.bright || 0) / 100;
     const tone = (o.tone || 0) / 100;
+    const center = !!o.centerWarp;   // 臉部辨識載不進來時的簡易效果
     tctx.save();
     tctx.setTransform(1, 0, 0, 1, 0, 0);
     if (o.mirror) { tctx.translate(W, 0); tctx.scale(-1, 1); }
     if (filterOK) tctx.filter = `brightness(${b}) saturate(${1 + tone * 0.35})`;
-    const a = (o.slim || 0) / 100 * 0.22;
+    const a = center ? (o.slim || 0) / 100 * 0.22 : 0;
     if (a > 0.002) {
-      // 瘦臉：畫面中央水平收窄、兩側放寬
+      // 瘦臉（簡易）：畫面中央水平收窄、兩側放寬
       const N = 40;
       for (let i = 0; i < N; i++) {
         const u0 = i / N, u1 = (i + 1) / N, s0 = warp(u0, a), s1 = warp(u1, a);
@@ -668,36 +793,17 @@ const FX = (() => {
       tctx.fillStyle = b > 1 ? `rgba(255,255,255,${(b - 1) * 0.6})` : `rgba(0,0,0,${(1 - b) * 0.8})`;
       tctx.fillRect(0, 0, W, H);
     }
-    if (o.smooth > 0) {
-      // 皮膚：柔焦疊加
-      small.width = Math.max(1, Math.round(W / 5)); small.height = Math.max(1, Math.round(H / 5));
-      sctx.imageSmoothingQuality = 'high';
-      sctx.drawImage(tmp, 0, 0, small.width, small.height);
-      tctx.save(); tctx.globalAlpha = o.smooth / 100 * 0.5; tctx.imageSmoothingQuality = 'high';
-      tctx.drawImage(small, 0, 0, W, H); tctx.restore();
-    }
     ctx.drawImage(tmp, 0, 0);
-    if (o.eyes > 0) {
-      // 大眼：以畫面中央偏上為中心的平滑放大（簡易效果，沒有臉部辨識）
-      const k = o.eyes / 100 * 0.32, R = Math.round(Math.min(W, H) * 0.24);
-      const x0 = Math.round(W / 2 - R), y0 = Math.round(H * 0.42 - R), D = R * 2;
-      if (x0 >= 0 && y0 >= 0 && x0 + D <= W && y0 + D <= H) {
-        if (eye.width !== D) { eye.width = D; eye.height = D; }
-        ectx.clearRect(0, 0, D, D); ectx.drawImage(ctx.canvas, x0, y0, D, D, 0, 0, D, D);
-        const sp = ectx.getImageData(0, 0, D, D).data;
-        const out = ectx.createImageData(D, D), op = out.data;
-        for (let y = 0; y < D; y++) {
-          const dy = y - R;
-          for (let x = 0; x < D; x++) {
-            const dx = x - R, i = (y * D + x) * 4, rr = (dx * dx + dy * dy) / (R * R);
-            let sx = x, sy = y;
-            if (rr < 1) { const f = 1 - k * (1 - rr) * (1 - rr); sx = Math.round(R + dx * f); sy = Math.round(R + dy * f); }
-            const j = (sy * D + sx) * 4;
-            op[i] = sp[j]; op[i + 1] = sp[j + 1]; op[i + 2] = sp[j + 2]; op[i + 3] = 255;
-          }
-        }
-        ectx.putImageData(out, 0, 0); ctx.drawImage(eye, x0, y0);
+    if (o.faces && o.faces.length) {
+      // 影片座標 → 畫布座標
+      const P = p => { const x = (p.x - cx) / cw * W; return { x: o.mirror ? W - x : x, y: (p.y - cy) / ch * H }; };
+      for (const f of o.faces) {
+        if (o.slim > 0) slimFace(ctx, { l: P(f.l), r: P(f.r), chin: P(f.chin) }, o.slim / 100);
+        if (o.eyes > 0) for (const e of [f.e1, f.e2]) { const c = P(e.c); bigEye(ctx, c.x, c.y, e.w * scale * 1.05, o.eyes / 100 * 0.34); }
       }
+    } else if (center && o.eyes > 0) {
+      // 大眼（簡易）：以畫面中央偏上為中心
+      bigEye(ctx, W / 2, H * 0.42, Math.min(W, H) * 0.24, o.eyes / 100 * 0.32);
     }
     if (tone !== 0) {
       ctx.save();
@@ -745,7 +851,9 @@ const Cam = (() => {
   if (window.ResizeObserver) new ResizeObserver(fit).observe(stage); else addEventListener('resize', fit);
 
   const hasFeed = () => video.readyState >= 2 && video.videoWidth > 0;
-  const opts = () => ({ zoom: st.zoom, mirror: facing === 'user' && settings.capture.mirror, ...live.beauty, bright: settings.brightness });
+  const wantFace = () => live.beauty.slim > 0 || live.beauty.eyes > 0;
+  const opts = () => ({ zoom: st.zoom, mirror: facing === 'user' && settings.capture.mirror, ...live.beauty, bright: settings.brightness,
+    faces: wantFace() ? Face.detect(video) : null, centerWarp: Face.failed() });
   function idle() {
     const W = canvas.width, H = canvas.height;
     const g = ctx.createLinearGradient(0, 0, W, H);
@@ -928,7 +1036,7 @@ const Cam = (() => {
     requestAnimationFrame(fit);
   });
   $$('#panel-beauty [data-b]').forEach(i => i.oninput = () => { live.beauty[i.dataset.b] = +i.value; i.nextElementSibling.textContent = i.value; });
-  $('#beauty-reset').onclick = () => { live.beauty = { slim: 0, eyes: 0, smooth: 0, tone: 0 }; syncUI(); };
+  $('#beauty-reset').onclick = () => { live.beauty = { slim: 0, eyes: 0, tone: 0 }; syncUI(); };
   $('#beauty-save').onclick = () => { settings.beauty = { ...live.beauty }; saveSettings(); toast('美顏設定已儲存'); };
   $('#bright-range').oninput = e => { settings.brightness = +e.target.value; $('#bright-out').textContent = e.target.value; };
   $('#bright-range').onchange = () => saveSettings();
@@ -1616,7 +1724,7 @@ function renderSettings() {
       </div>
       <div class="card" style="--c:var(--soft-pink)"><h3><i></i>美顏（已儲存的設定）</h3>
         <div class="set-row"><span>瘦臉 / 大眼</span><span class="muted">${b.slim} / ${b.eyes}</span></div>
-        <div class="set-row"><span>皮膚 / 膚色</span><span class="muted">${b.smooth} / ${b.tone}</span></div>
+        <div class="set-row"><span>膚色</span><span class="muted">${b.tone}</span></div>
         <div class="set-row"><span>畫面明暗</span><span class="muted">${settings.brightness}</span></div>
         <div class="row gap" style="margin-top:10px"><button class="btn soft sm" data-go="capture">到拍攝頁調整</button><button class="btn ghost sm" id="s-beauty-reset">全部重設</button></div>
       </div>
@@ -1660,7 +1768,7 @@ function renderSettings() {
     });
   });
   $$('[data-go]', root).forEach(b => b.onclick = () => go(b.dataset.go));
-  $('#s-beauty-reset').onclick = () => { settings.beauty = { slim: 0, eyes: 0, smooth: 0, tone: 0 }; settings.brightness = 0; Object.assign(Cam.live.beauty, settings.beauty); saveSettings(); Cam.syncUI(); renderSettings(); toast('美顏已重設'); };
+  $('#s-beauty-reset').onclick = () => { settings.beauty = { slim: 0, eyes: 0, tone: 0 }; settings.brightness = 0; Object.assign(Cam.live.beauty, settings.beauty); saveSettings(); Cam.syncUI(); renderSettings(); toast('美顏已重設'); };
   $('#s-export').onclick = exportBackup;
   $('#s-import').onclick = async () => { const f = await pickFiles(false, 'application/json,.json'); if (f[0]) importBackup(f[0]); };
   $('#s-clear').onclick = clearAll;
