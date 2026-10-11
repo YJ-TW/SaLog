@@ -245,6 +245,10 @@ input[type=range]{accent-color:var(--pink);width:100%}
 @keyframes spin{to{transform:rotate(360deg)}}
 .lens-btn{flex-shrink:0;height:30px;padding:0 10px;border-radius:999px;background:var(--surface);border:1px solid var(--line2);font-size:12px;font-weight:700;color:var(--medium)}
 .lens-btn.on{background:var(--pink);border-color:var(--pink);color:#fff}
+/* ---------- 頭貼 ---------- */
+.avatar{width:38px;height:38px;border-radius:50%;background:var(--light-pink) center/cover no-repeat;display:inline-grid;place-items:center;color:var(--pink);font-weight:700;font-size:16px;flex-shrink:0;overflow:hidden}
+.avatar svg{width:20px;height:20px}
+.avatar.lg{width:46px;height:46px;font-size:19px}
 /* ---------- 倒數計時 ---------- */
 .pill-btn.sm{padding:0 11px;height:38px;font-size:12px;gap:4px}
 .pill-btn.sm span{color:var(--pink)}
@@ -353,7 +357,7 @@ input[type=range]{accent-color:var(--pink);width:100%}
   <section id="page-journal" class="page">
     <div class="container">
       <div class="page-head">
-        <div><h1>日誌</h1><p class="sub" id="j-sub"></p></div>
+        <div class="row gap" style="gap:12px"><span class="avatar lg" id="j-avatar"></span><div><h1 id="j-title">日誌</h1><p class="sub" id="j-sub"></p></div></div>
         <button class="btn primary" id="j-add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>新增影像</button>
       </div>
       <div class="toolbar">
@@ -422,6 +426,7 @@ const LS = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { toast('瀏覽器儲存空間不足，請先匯出備份或刪除部分紀錄'); return false; } }
 };
 const DEFAULTS = {
+  profile: { name: '', avatar: '' },
   theme: 'light',
   capture: { duration: '3', timer: '0', ratio: '16:9', mirror: true, audio: true },
   beauty: { slim: 0, eyes: 0, tone: 0 },
@@ -1412,6 +1417,8 @@ function renderJournal() {
   const q = $('#j-q').value.trim().toLowerCase();
   const date = $('#j-date').value, sort = $('#j-sort').value;
   $('#j-clear').hidden = !(q || date || J.type !== 'all');
+  paintAvatar($('#j-avatar'));
+  $('#j-title').textContent = settings.profile.name ? `${settings.profile.name} 的日誌` : '日誌';
   const list = records.filter(r => {
     if (J.type !== 'all' && r.type !== J.type) return false;
     if (date && r.date !== date) return false;
@@ -1617,6 +1624,28 @@ function clipCard(r) {
     </div>
     <div class="meta"><div class="time">${(r.time || '').slice(0, 5)}</div><div class="mood">${esc(r.mood) || '<span class="muted">—</span>'}</div></div>
   </button>`;
+}
+/* 頭貼：有照片用照片，沒有就用名字的第一個字，再沒有就用沙漏 */
+function paintAvatar(el) {
+  if (!el) return;
+  const { name, avatar } = settings.profile;
+  el.style.backgroundImage = avatar ? `url(${avatar})` : '';
+  el.innerHTML = avatar ? '' : (name ? esc([...name][0]) : hourglass());
+}
+async function pickAvatar() {
+  const [file] = await pickFiles(false, 'image/*');
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await loadImg(url), S = 256, c = document.createElement('canvas');
+    c.width = c.height = S;
+    const k = Math.max(S / img.naturalWidth, S / img.naturalHeight), w = img.naturalWidth * k, h = img.naturalHeight * k;
+    c.getContext('2d').drawImage(img, (S - w) / 2, (S - h) / 2, w, h);   // 置中裁成正方形
+    settings.profile.avatar = c.toDataURL('image/jpeg', 0.85);
+    saveSettings(); toast('頭貼已更新');
+  } catch (e) { toast('這張照片無法讀取'); }
+  URL.revokeObjectURL(url);
+  renderSettings();
 }
 function hourglass() {
   return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12M6 21h12M7 3c0 5 5 6 5 9s-5 4-5 9M17 3c0 5-5 6-5 9s5 4 5 9"/><path d="M9.5 18.5c1-1.2 4-1.2 5 0" fill="currentColor"/></svg>`;
@@ -1969,7 +1998,11 @@ function renderSettings() {
   root.innerHTML = `
     <div class="page-head"><div><h1>個人化設定</h1><p class="sub">設定與紀錄都只存在這台裝置的瀏覽器裡</p></div></div>
     <div class="set-grid">
-      <div class="card" style="--c:var(--pink)"><h3><i></i>外觀</h3>
+      <div class="card" style="--c:var(--pink)"><h3><i></i>個人資料</h3>
+        <div class="set-row"><span>頭貼</span><div class="row gap wrap end"><span class="avatar" id="s-avatar"></span><button class="btn soft sm" id="s-avatar-pick">選擇照片</button>${settings.profile.avatar ? '<button class="btn ghost sm" id="s-avatar-del">移除</button>' : ''}</div></div>
+        <div class="set-row"><span>使用者名稱<small>會顯示在日誌頁的標題</small></span><input class="input" data-set="profile.name" maxlength="20" placeholder="你的名字"></div>
+      </div>
+      <div class="card" style="--c:var(--medium)"><h3><i></i>外觀</h3>
         <div class="set-row"><span>明暗<small>APP 整體的淺色或深色</small></span>${s('theme', [['light', '淺色'], ['dark', '深色'], ['auto', '跟隨手機設定']])}</div>
       </div>
       <div class="card" style="--c:var(--blue)"><h3><i></i>拍攝</h3>
@@ -2022,10 +2055,14 @@ function renderSettings() {
       if (p === 'capture.duration') Cam.setDefaultDur(nv);
       if (p === 'capture.timer') Cam.setDefaultTimer(nv);
       if (p === 'theme') applyTheme();
+      if (p === 'profile.name') paintAvatar($('#s-avatar'));
     });
   });
   $$('[data-go]', root).forEach(b => b.onclick = () => go(b.dataset.go));
   $('#s-beauty-reset').onclick = () => { settings.beauty = { slim: 0, eyes: 0, tone: 0 }; Object.assign(Cam.live.beauty, settings.beauty); saveSettings(); Cam.syncUI(); renderSettings(); toast('美顏已重設'); };
+  paintAvatar($('#s-avatar'));
+  $('#s-avatar-pick').onclick = pickAvatar;
+  const ad = $('#s-avatar-del'); if (ad) ad.onclick = () => { settings.profile.avatar = ''; saveSettings(); renderSettings(); toast('已移除頭貼'); };
   $('#s-export').onclick = exportBackup;
   $('#s-import').onclick = async () => { const f = await pickFiles(false, 'application/json,.json'); if (f[0]) importBackup(f[0]); };
   $('#s-clear').onclick = clearAll;
