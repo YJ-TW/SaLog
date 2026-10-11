@@ -1426,7 +1426,7 @@ function renderJournal() {
         <div><b class="d">${dotDate(d)}</b><span class="wk">週${weekday(d)}</span><span class="cnt">${rs.length}${rs.length !== total ? ' / ' + total : ''} 支影像</span></div>
         <div class="row gap">${vlogIndex[d] ? `<button class="btn blue sm" data-watch="${d}">▶ 觀看 VLOG</button>` : ''}<button class="btn soft sm" data-vlog="${d}">${vlogIndex[d] ? '重新製作' : '製作 VLOG'}</button></div>
       </div>
-      <div class="strip">${rs.map(clipCard).join('')}</div>
+      <div class="strip">${rs.slice().sort(byTime).map(clipCard).join('')}</div>
     </div>`;
   }).join('');
   renderViewer();
